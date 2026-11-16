@@ -1,0 +1,738 @@
+<div id="security-activity" data-i18n-label="app.region" data-main-state="loading" data-card-state="loading" data-list-state="loading">
+  <style>
+    html[data-activity-observer-canvas="flush"] { --oi-bg:var(--color-background-primary,light-dark(#fcfcfd,#151518));background:var(--oi-bg);color-scheme:light dark; }
+    html[data-activity-observer-canvas="flush"],html[data-activity-observer-canvas="flush"] > body { margin:0!important;padding:0!important; }
+    html[data-activity-observer-viewport="fullscreen"],html[data-activity-observer-viewport="fullscreen"] body { margin:0;padding:0;height:auto;min-height:0;overflow:hidden; }
+    #security-activity { --oi-side:var(--color-background-secondary,light-dark(#f5f5f7,#111114));--oi-fg:var(--color-text-primary,light-dark(#222228,#ececf0));--oi-muted:var(--color-text-secondary,light-dark(#60606b,#aaaab6));--oi-line:var(--color-border-primary,light-dark(#e7e7ed,#2a2a30));--oi-hover:light-dark(#ededf2,#222228);--oi-accent:light-dark(#5b4cac,#b2a8ef);--oi-selected:light-dark(#eae6f9,#302a44);--oi-green:light-dark(#31785c,#84b49a);--oi-amber:light-dark(#9d681f,#d6ac6a);--oi-tint:light-dark(#f1eff8,#24212f);font:13px/1.5 system-ui,sans-serif;color:var(--oi-fg);width:100%;height:760px; }
+    #security-activity { min-height:0;max-height:760px;overflow:hidden;contain:layout size; }
+    #security-activity * { box-sizing:border-box; }
+    #security-activity button,#security-activity select { font:inherit;color:inherit; }
+    #security-activity :focus-visible { outline:2px solid var(--color-ring-primary,var(--oi-accent));outline-offset:-2px; }
+    #security-activity .oi-summary { display:none;padding:14px 18px 12px; }
+    #security-activity[data-compact=true] { height:auto;max-height:none;contain:layout;overflow:visible; }
+    #security-activity[data-compact=true] .oi-summary { display:block; }
+    #security-activity[data-compact=true] .oi-shell { display:none; }
+    #security-activity .oi-summary-head { display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;min-height:28px;margin-bottom:11px; }
+    #security-activity .oi-summary-head h2 { margin:0;font-size:14px;line-height:20px;letter-spacing:-.15px; }
+    #security-activity .oi-summary-meta { display:inline-flex;align-items:center;gap:10px;min-height:24px;color:var(--oi-muted);font-size:12px;line-height:16px; }
+    #security-activity #oi-card-date { display:inline-flex;align-items:center;min-height:24px;font-variant-numeric:tabular-nums; }
+    #security-activity .oi-summary p { margin:0;color:var(--oi-muted); }
+    #security-activity .oi-card-track { display:grid;grid-auto-columns:clamp(192px,36%,246px);grid-auto-flow:column;gap:9px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;list-style:none;padding:2px 1px 8px;margin:0;scrollbar-width:thin; }
+    #security-activity .oi-card { min-width:0;scroll-snap-align:start;display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--oi-line);border-radius:8px;background:var(--oi-side); }
+    #security-activity .oi-card-head { display:flex;align-items:center;gap:8px;min-width:0; }
+    #security-activity .oi-card-icon { display:grid;place-items:center;flex:0 0 24px;height:24px;border:1px solid var(--oi-line);border-radius:5px;color:var(--oi-muted); }
+    #security-activity .oi-card-icon:has(img) { border-color:transparent; }
+    #security-activity .oi-card-icon img { display:block;width:24px;height:24px;object-fit:contain; }
+    #security-activity .oi-card-icon svg { display:block; }
+    #security-activity .oi-card h3 { flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;line-height:18px; }
+    #security-activity .oi-card-state { font-size:11px;color:var(--oi-green);white-space:nowrap; }
+    #security-activity .oi-card-state[data-status=attention] { color:var(--oi-amber); }
+    #security-activity .oi-card-metrics { margin:0;display:grid;gap:5px; }
+    #security-activity .oi-card-metrics div { display:flex;align-items:baseline;justify-content:space-between;gap:7px;font-size:12px; }
+    #security-activity .oi-card-metrics dt { color:var(--oi-muted); }
+    #security-activity .oi-card-metrics dd { margin:0;min-width:0;text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums; }
+    #security-activity .oi-card-open { margin-top:auto;align-self:flex-start;padding:4px 0 0;border:0;background:none;color:var(--oi-accent);font-size:12px;cursor:pointer; }
+    #security-activity .oi-card-open:hover { text-decoration:underline;text-underline-offset:3px; }
+    #security-activity .oi-card-nav { display:inline-flex;align-items:center;gap:3px; }
+    #security-activity .oi-card-nav button { display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:1px solid var(--oi-line);border-radius:5px;background:var(--oi-bg);color:var(--oi-fg);line-height:1;cursor:pointer; }
+    #security-activity .oi-card-nav svg { display:block;flex:0 0 14px;width:14px;height:14px; }
+    #security-activity .oi-card-nav button:disabled { opacity:.4;cursor:default; }
+    #security-activity .oi-card-nav button:first-child svg { transform:rotate(180deg); }
+    #security-activity .oi-summary-notice:not(:empty) { margin-top:6px; }
+    #security-activity:not([data-card-state=loading]) .oi-card-placeholder,
+    #security-activity:not([data-card-state=ready]) #oi-review-cards,
+    #security-activity:not([data-card-state=unavailable]) #oi-card-state,
+    #security-activity:not([data-main-state=loading]) #oi-main-placeholder,
+    #security-activity:not([data-main-state=ready]) #oi-main-content,
+    #security-activity:not([data-main-state=unavailable]) #oi-main-state,
+    #security-activity:not([data-list-state=loading]) .oi-list-placeholder,
+    #security-activity:not([data-list-state=ready]) .oi-nav-scroll,
+    #security-activity:not([data-list-state=ready]) .oi-nav-note { display:none; }
+    #security-activity .oi-placeholder-block { display:block;border-radius:5px;background:var(--color-background-tertiary,light-dark(#e7e7ed,#2b2b32));height:11px; }
+    #security-activity .oi-placeholder-block { position:relative;overflow:hidden; }
+    #security-activity .oi-placeholder-block::after { content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent,light-dark(#ffffffc7,#ffffff24),transparent);transform:translateX(-100%);animation:oi-shimmer 1.8s ease-in-out infinite; }
+    @keyframes oi-shimmer { 0% { transform:translateX(-100%); } 85%,100% { transform:translateX(100%); } }
+    @media(prefers-reduced-motion:reduce) { #security-activity .oi-placeholder-block::after { animation:none;display:none; } }
+    #security-activity .oi-placeholder-title { width:min(148px,55%);height:17px; }
+    #security-activity .oi-placeholder-line { width:72%; }
+    #security-activity .oi-placeholder-short { width:40%; }
+    #security-activity .oi-placeholder-mark { width:24px;height:24px;flex-shrink:0; }
+    #security-activity .oi-card-placeholder .oi-card { min-height:130px; }
+    #security-activity .oi-main-placeholder { flex:1;min-height:0;overflow:hidden;padding:22px 24px;display:grid;align-content:start;gap:19px; }
+    #security-activity .oi-placeholder-heading { display:flex;justify-content:space-between;align-items:center;gap:16px; }
+    #security-activity .oi-placeholder-tabs { width:min(295px,82%);height:14px; }
+    #security-activity .oi-placeholder-metrics { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px; }
+    #security-activity .oi-placeholder-metrics span { height:38px; }
+    #security-activity .oi-placeholder-chart { height:clamp(92px,25vh,212px); }
+    #security-activity .oi-list-placeholder { display:grid;gap:12px;padding:4px 10px; }
+    #security-activity .oi-list-placeholder span { height:25px; }
+    #security-activity .oi-state { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:24px;text-align:center;color:var(--oi-muted); }
+    #security-activity #oi-main-state { flex:1;min-height:0;overflow:auto; }
+    #security-activity #oi-card-state { min-height:134px;padding:16px; }
+    #security-activity .oi-state-icon { display:grid;place-items:center;width:36px;height:36px;margin-bottom:3px;border:1px solid var(--oi-line);border-radius:8px;background:var(--oi-side);color:var(--oi-accent); }
+    #security-activity .oi-state-icon svg { display:block;width:19px;height:19px; }
+    #security-activity .oi-state-title { color:var(--oi-fg);font-size:14px;font-weight:600; }
+    #security-activity .oi-state p { margin:0;max-width:34em;overflow-wrap:anywhere; }
+    #security-activity .oi-state-retry { margin-top:5px;padding:5px 9px;border:1px solid var(--oi-line);border-radius:5px;background:var(--oi-side);color:var(--oi-accent);cursor:pointer; }
+    #security-activity .oi-shell { background:var(--oi-bg);overflow:hidden;height:100%;max-height:100%;min-height:0;display:flex;flex-direction:column; }
+    #security-activity .oi-top { flex-shrink:0;min-height:55px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 22px;border-bottom:1px solid var(--oi-line); }
+    #security-activity .oi-brand { display:flex;align-items:center;gap:9px;font-weight:500;letter-spacing:-.2px; }
+    #security-activity .oi-top-meta { display:flex;align-items:center;gap:16px;color:var(--oi-muted);font-size:12px;line-height:18px;min-width:0; }
+    #security-activity .oi-check { display:inline-flex;align-items:center;gap:6px;white-space:nowrap; }
+    #security-activity .oi-check-dot { width:5px;height:5px;border-radius:50%;background:var(--oi-green); }
+    #security-activity .oi-layout { display:grid;grid-template-columns:230px minmax(0,1fr);grid-template-rows:minmax(0,1fr);flex:1 1 0%;min-height:0;overflow:hidden; }
+    #security-activity .oi-sidebar { height:100%;max-height:100%;min-height:0;overflow:hidden;display:flex;flex-direction:column;background:var(--oi-side);border-right:1px solid var(--oi-line);padding:20px 10px 14px; }
+    #security-activity .oi-nav-head { padding:0 10px 12px;display:flex;justify-content:space-between;color:var(--oi-muted);font-size:11px;letter-spacing:.2px; }
+    #security-activity .oi-nav-scroll { flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none; }
+    #security-activity .oi-nav-scroll::-webkit-scrollbar { display:none;width:0;height:0; }
+    #security-activity .oi-app { width:100%;display:flex;align-items:center;gap:8px;padding:9px 9px;margin:2px 0;border:0;border-radius:6px;background:transparent;text-align:left;min-height:38px; }
+    #security-activity .oi-app:hover { background:var(--oi-hover); }
+    #security-activity .oi-app[aria-pressed=true] { color:var(--oi-accent);background:var(--oi-selected); }
+    #security-activity .oi-app-name { flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px; }
+    #security-activity .oi-app-count { color:var(--oi-muted);font-size:11px;font-variant-numeric:tabular-nums; }
+    #security-activity .oi-glyph { display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;flex-shrink:0; }
+    #security-activity .oi-glyph svg { width:16px;height:16px;stroke-width:1.7; }
+    #security-activity .oi-glyph img { width:20px;height:20px;object-fit:contain; }
+    #security-activity .oi-badge { display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;flex-shrink:0;color:var(--oi-green); }
+    #security-activity .oi-badge svg { width:13px;height:13px;stroke-width:1.9; }
+    #security-activity .oi-badge[data-status=attention] { color:var(--oi-amber); }
+    #security-activity .oi-nav-note { flex-shrink:0;margin:12px 10px 0;padding-top:12px;border-top:1px solid var(--oi-line);font-size:11px;color:var(--oi-muted); }
+    #security-activity .oi-badge-key { display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:7px; }
+    #security-activity .oi-main { height:100%;max-height:100%;overflow:hidden;display:flex;flex-direction:column;min-width:0;min-height:0; }
+    #security-activity #oi-main-content { flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden; }
+    #security-activity .oi-main-head { padding:18px 24px 0;flex-shrink:0; }
+    #security-activity .oi-breadcrumb { display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--oi-muted);font-size:11px;margin-bottom:15px; }
+    #security-activity .oi-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:12px; }
+    #security-activity .oi-title-group { min-width:0; }
+    #security-activity .oi-title-line { display:flex;align-items:center;gap:9px; }
+    #security-activity h2 { margin:0;font-size:21px;line-height:1.4;font-weight:500;letter-spacing:-.6px;overflow-wrap:anywhere; }
+    #security-activity .oi-id { color:var(--oi-muted);font-size:11px;margin-top:4px;overflow-wrap:anywhere; }
+    #security-activity .oi-app-mark { width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--oi-tint);color:var(--oi-accent);border-radius:8px;flex-shrink:0; }
+    #security-activity .oi-app-mark svg { width:20px;height:20px; }
+    #security-activity .oi-app-mark img { width:36px;height:36px;object-fit:contain; }
+    #security-activity .oi-app-mark:has(img) { background:transparent; }
+    #security-activity .oi-context { font-size:12px;color:var(--oi-muted);margin:12px 0 0; }
+    #security-activity .oi-tabs { display:flex;gap:21px;border-bottom:1px solid var(--oi-line);padding:0 24px;margin-top:18px;flex-shrink:0; }
+    #security-activity .oi-tabs button { padding:0 0 10px;border:0;border-bottom:2px solid transparent;background:none;color:var(--oi-muted);font-size:12px;white-space:nowrap; }
+    #security-activity .oi-tabs button[aria-selected=true] { border-bottom-color:var(--oi-accent);color:var(--oi-fg); }
+    #security-activity .oi-content { flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 24px 20px;scrollbar-width:thin; }
+    #security-activity .oi-metrics { padding-bottom:18px;border-bottom:1px solid var(--oi-line); }
+    #security-activity .oi-stats { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0 0; }
+    #security-activity .oi-stat-label { display:inline-flex;align-items:center;gap:5px;max-width:100%;border:0;padding:0;background:none;text-align:left;font-size:11px;color:var(--oi-muted);margin-bottom:5px; }
+    #security-activity .oi-stat-label svg { width:12px;height:12px;flex:0 0 12px; }
+    #security-activity .oi-stat-value { font-size:20px;line-height:1.3;font-weight:500;letter-spacing:-.6px;font-variant-numeric:tabular-nums;white-space:nowrap; }
+    #security-activity .oi-stat-value[data-format=text] { font-size:16px;letter-spacing:-.3px; }
+    #security-activity .oi-stat-unit { font-size:12px;margin-left:3px;font-weight:400;letter-spacing:0; }
+    #security-activity .oi-stat-note { color:var(--oi-muted);font-size:11px;margin-top:5px;overflow-wrap:anywhere; }
+    #security-activity .oi-swatch { width:6px;height:6px;border-radius:2px;background:var(--oi-series);flex-shrink:0; }
+    #security-activity .oi-section-head { display:flex;justify-content:space-between;align-items:center;gap:12px;margin:22px 0 10px; }
+    #security-activity h3 { font-size:12px;line-height:1.5;font-weight:500;margin:0; }
+    #security-activity .oi-section-count { color:var(--oi-muted);font-size:11px;font-variant-numeric:tabular-nums; }
+    #security-activity .oi-chart-slot { min-height:236px;min-width:0; }
+    #security-activity .oi-chart-status { min-height:212px;font-size:12px; }
+    #security-activity .oi-group { border-top:1px solid var(--oi-line);margin-top:22px; }
+    #security-activity .oi-group .oi-section-head { margin-top:17px; }
+    #security-activity .oi-group-title { display:flex;align-items:center;gap:7px; }
+    #security-activity .oi-record { border-bottom:1px solid var(--oi-line); }
+    #security-activity .oi-record:last-child { border-bottom:0; }
+    #security-activity .oi-record > summary { list-style:none; }
+    #security-activity .oi-record > summary::-webkit-details-marker { display:none; }
+    #security-activity .oi-record-chevron { display:flex;align-items:center;justify-content:center;width:14px;height:14px;transform-origin:center;color:var(--oi-muted);margin-top:2px; }
+    #security-activity .oi-record-chevron svg { display:block;width:14px;height:14px; }
+    #security-activity .oi-record[open] > summary .oi-record-chevron { transform:rotate(90deg); }
+    #security-activity .oi-event { display:grid;grid-template-columns:14px 42px minmax(0,1fr) auto;gap:8px;padding:11px 0;align-items:start; }
+    #security-activity .oi-event-time { color:var(--oi-muted);font-size:11px;font-variant-numeric:tabular-nums;padding-top:1px; }
+    #security-activity .oi-event-label { font-size:12px; }
+    #security-activity .oi-event-sub { color:var(--oi-muted);font-size:11px;margin-top:2px;overflow-wrap:anywhere; }
+    #security-activity .oi-event-count { font-size:11px;color:var(--oi-muted);font-variant-numeric:tabular-nums;white-space:nowrap; }
+    #security-activity .oi-empty { padding:20px 0;font-size:12px;color:var(--oi-muted); }
+    #security-activity .oi-endpoint { display:grid;grid-template-columns:14px minmax(0,1fr) 56px 76px;gap:8px;align-items:center;padding:11px 0;font-size:12px; }
+    #security-activity .oi-endpoint > div { min-width:0;overflow-wrap:anywhere; }
+    #security-activity .oi-endpoint-head { font-size:11px;color:var(--oi-muted); }
+    #security-activity .oi-endpoint small { display:block;color:var(--oi-muted);font-size:11px; }
+    #security-activity .oi-right { text-align:right;font-variant-numeric:tabular-nums; }
+    #security-activity .oi-table-note { padding-top:10px;color:var(--oi-muted);font-size:11px; }
+    #security-activity .oi-record-body { padding:0 0 14px 22px;min-width:0; }
+    #security-activity .oi-record-meta { display:flex;gap:6px 18px;flex-wrap:wrap;color:var(--oi-muted);font-size:11px;padding:5px 0 12px; }
+    #security-activity .oi-location-heading { color:var(--oi-muted);font-size:11px;margin-bottom:6px; }
+    #security-activity .oi-location { padding:10px 0;border-top:1px solid var(--oi-line);min-width:0; }
+    #security-activity .oi-location code { display:block;font:11px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere;word-break:break-word;color:var(--oi-fg); }
+    #security-activity .oi-location-footer { display:flex;gap:8px 14px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:7px; }
+    #security-activity .oi-location small { color:var(--oi-muted);font-size:11px; }
+    #security-activity .oi-location small:empty { display:none; }
+    #security-activity .oi-reveal { display:inline-flex;align-items:center;flex-shrink:0;margin-left:auto;border:0;padding:0;background:transparent;color:var(--oi-accent);font-size:11px;text-decoration:none;text-underline-offset:3px; }
+    #security-activity .oi-reveal:hover:not(:disabled),#security-activity .oi-reveal:focus-visible { text-decoration:underline; }
+    #security-activity .oi-reveal:disabled { opacity:.55; }
+    #security-activity .oi-reveal-status { font-size:11px;color:var(--oi-muted);margin-top:7px; }
+    #security-activity .oi-footer { display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;border-top:1px solid var(--oi-line);padding:12px 24px;color:var(--oi-muted);font-size:11px; }
+    #security-activity .oi-investigate { display:flex;gap:6px;align-items:center;border:0;background:none;padding:3px 0;color:var(--oi-accent);font-size:11px; }
+    #security-activity .oi-report-toggle,#security-activity .oi-report-close { display:inline-flex;align-items:center;border:0;background:none;padding:0;line-height:inherit;color:var(--oi-accent); }
+    #security-activity .oi-report-toggle:hover,#security-activity .oi-report-close:hover { text-decoration:underline; }
+    #security-activity .oi-period { display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:6px; }
+    #security-activity .oi-period button { display:inline-flex;align-items:center;gap:6px;min-height:30px;color:var(--oi-fg);background:var(--oi-side);border:1px solid var(--oi-line);border-radius:5px;padding:4px 8px;cursor:pointer; }
+    #security-activity .oi-period button:hover,#security-activity .oi-calendar-nav:hover { background:var(--oi-hover); }
+    #security-activity .oi-period button[aria-expanded=true] { border-color:var(--oi-accent); }
+    #security-activity #oi-range-label { font-variant-numeric:tabular-nums;white-space:nowrap; }
+    #security-activity #oi-today { color:var(--oi-accent); }
+    #security-activity .oi-calendar,#security-activity .oi-selection { position:fixed;inset:auto;z-index:5;margin:0;max-width:calc(100% - 16px);border:1px solid var(--oi-line);border-radius:8px;background:var(--oi-bg);box-shadow:0 8px 24px #0002;color:var(--oi-fg); }
+    #security-activity .oi-calendar { width:286px;padding:11px;max-height:calc(100dvh - 16px);overflow:auto; }
+    #security-activity .oi-calendar-head { display:flex;align-items:center;justify-content:space-between;gap:8px; }
+    #security-activity .oi-calendar-head h2 { font-size:13px; }
+    #security-activity .oi-calendar-nav { display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;background:none;border-radius:5px;line-height:1;cursor:pointer; }
+    #security-activity .oi-calendar-nav svg { display:block; }
+    #security-activity .oi-calendar-nav:disabled { opacity:.35;cursor:default; }
+    #security-activity .oi-calendar-nav:first-child svg { transform:rotate(180deg); }
+    #security-activity .oi-calendar-week,#security-activity .oi-calendar-days { display:grid;grid-template-columns:repeat(7,minmax(0,1fr));text-align:center; }
+    #security-activity .oi-calendar-week { padding-block:9px 4px;color:var(--oi-muted);font-size:11px; }
+    #security-activity .oi-calendar-days button { min-width:0;min-height:30px;border:0;background:none;border-radius:5px;cursor:pointer;font-variant-numeric:tabular-nums; }
+    #security-activity .oi-calendar-days button:hover:not(:disabled) { background:var(--oi-hover); }
+    #security-activity .oi-calendar-days button:disabled { opacity:.35;cursor:default; }
+    #security-activity .oi-calendar-days button[aria-pressed=true] { background:var(--oi-selected);color:var(--oi-accent); }
+    #security-activity .oi-calendar-days button[data-edge][aria-pressed=true] { box-shadow:inset 0 0 0 1px var(--oi-accent);font-weight:600; }
+    #security-activity .oi-calendar-days button[aria-current=date] { text-decoration:underline;text-underline-offset:3px; }
+    #security-activity .oi-calendar-hint { margin:8px 0 0;color:var(--oi-muted);font-size:11px; }
+    #security-activity .oi-period-status { margin:0;padding-top:12px;color:var(--oi-muted);font-size:11px; }
+    #security-activity .oi-period-status:empty { display:none; }
+    #security-activity .oi-selection { width:296px;padding:11px;font-size:12px;max-height:calc(100dvh - 16px);overflow:auto; }
+    #security-activity .oi-selection-title { display:block;overflow-wrap:anywhere;font-weight:600; }
+    #security-activity .oi-selection textarea { display:block;width:100%;resize:vertical;min-height:55px;max-height:130px;margin:8px 0;padding:6px 8px;border:1px solid var(--oi-line);border-radius:5px;background:var(--oi-side);font:inherit;color:var(--oi-fg); }
+    #security-activity .oi-selection textarea:focus-visible { outline:2px solid color-mix(in srgb,var(--oi-accent) 30%,transparent);outline-offset:1px;border-color:var(--oi-accent); }
+    #security-activity .oi-selection-footer { display:flex;align-items:center;justify-content:flex-end;gap:6px; }
+    #security-activity .oi-selection button { border:0;border-radius:4px;padding:5px 8px;background:transparent;color:var(--oi-muted);cursor:pointer; }
+    #security-activity #oi-selection-chat { background:var(--oi-tint);color:var(--oi-accent); }
+    #security-activity .oi-selection button:hover { background:var(--oi-selected); }
+    #security-activity .oi-attachment-message { margin:5px 0 0;color:var(--oi-muted);font-size:11px; }
+    #security-activity .oi-attachment-message:empty { display:none; }
+    #security-activity .oi-record-row { position:relative;border-bottom:1px solid var(--oi-line); }
+    #security-activity .oi-record-row > details { border:0; }
+    #security-activity .oi-record-row > details > summary,#security-activity .oi-endpoint-head[data-attach] { padding-right:34px; }
+    #security-activity .oi-record-attach { position:absolute;top:5px;right:0;display:grid;place-items:center;width:27px;height:27px;border:0;border-radius:5px;background:none;color:var(--oi-muted);cursor:pointer; }
+    #security-activity .oi-record-attach:hover,#security-activity .oi-record-attach[aria-pressed=true] { background:var(--oi-selected);color:var(--oi-accent); }
+    #security-activity .oi-record-attach svg { display:block; }
+    #security-activity .oi-record-attach[aria-pressed=false] .oi-attached-icon,#security-activity .oi-record-attach[aria-pressed=true] .oi-add-icon { display:none; }
+    #security-activity { --oi-chart-selection:light-dark(#7564cc24,#b6a6ff30); }
+    #security-activity .oi-report { width:min(540px,calc(100% - 32px));max-height:calc(100% - 32px);padding:24px;border:1px solid var(--oi-line);border-radius:12px;background:var(--oi-bg);color:var(--oi-fg); }
+    #security-activity .oi-report::backdrop { background:#0005; }
+    #security-activity .oi-report header { display:flex;justify-content:space-between;align-items:center;gap:12px; }
+    #security-activity .oi-report h2,#security-activity .oi-report h3 { margin:0;font-size:inherit;font-weight:600; }
+    #security-activity .oi-report p { white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 14px; }
+    #security-activity .oi-mobile-select { display:none; }
+    #security-activity .oi-sr { position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap; }
+    #security-activity [hidden] { display:none!important; }
+    @media(max-width:760px) {
+      #security-activity .oi-layout { grid-template-columns:198px minmax(0,1fr); }
+      #security-activity .oi-main-head { padding:18px 18px 0; }
+      #security-activity .oi-content { padding:0 18px 16px; }
+      #security-activity .oi-tabs { padding:0 18px;gap:17px; }
+      #security-activity .oi-footer { padding:12px 18px; }
+      #security-activity .oi-top { padding:12px 18px; }
+      #security-activity .oi-top-meta { gap:9px; }
+      #security-activity .oi-app { gap:6px;padding-left:7px;padding-right:7px; }
+      #security-activity .oi-stats { grid-template-columns:repeat(2,minmax(0,1fr));gap:15px; }
+    }
+    @media(max-width:560px) {
+      #security-activity .oi-layout { grid-template-columns:minmax(0,1fr); }
+      #security-activity .oi-sidebar { display:none; }
+      #security-activity .oi-top { padding:12px 14px;align-items:flex-start; }
+      #security-activity .oi-top-meta { flex-direction:column;gap:2px;align-items:flex-end;font-size:11px; }
+      #security-activity .oi-main-head { padding:14px 14px 0; }
+      #security-activity .oi-content { padding:0 14px 16px; }
+      #security-activity .oi-tabs { padding:0 14px;gap:18px; }
+      #security-activity .oi-tabs button { font-size:11px; }
+      #security-activity .oi-footer { padding:10px 14px; }
+      #security-activity .oi-mobile-select { display:block;margin-bottom:14px; }
+      #security-activity .oi-mobile-select select { width:100%;min-height:38px;background:var(--oi-side);border:1px solid var(--oi-line);border-radius:6px;padding:6px 9px;font-size:16px; }
+      #security-activity .oi-breadcrumb { display:none; }
+      #security-activity h2 { font-size:20px; }
+      #security-activity .oi-endpoint { grid-template-columns:14px minmax(0,1fr) 33px 61px;gap:6px; }
+      #security-activity .oi-event { grid-template-columns:14px 35px minmax(0,1fr) auto;gap:6px; }
+    }
+    @media(prefers-reduced-motion:no-preference) { #security-activity .oi-app { transition:background .12s,color .12s; } #security-activity .oi-record-chevron { transition:transform .15s; } }
+    @media(pointer:coarse) { #security-activity button,#security-activity select,#security-activity summary { min-height:44px; } #security-activity .oi-card-nav button { width:44px; } }
+  </style>
+  <section class="oi-summary" aria-labelledby="oi-summary-title">
+    <header class="oi-summary-head">
+      <h2 id="oi-summary-title" tabindex="-1" data-i18n="summary.title"></h2>
+      <div class="oi-summary-meta"><time id="oi-card-date"></time><div class="oi-card-nav" id="oi-card-nav" hidden>
+        <button type="button" id="oi-cards-prev" data-i18n-label="cards.previous"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+        <button type="button" id="oi-cards-next" data-i18n-label="cards.next"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+      </div></div>
+    </header>
+    <div class="oi-card-track oi-card-placeholder" aria-hidden="true">
+      <div class="oi-card"><div class="oi-card-head"><span class="oi-placeholder-block oi-placeholder-mark"></span><span class="oi-placeholder-block oi-placeholder-title"></span></div><span class="oi-placeholder-block oi-placeholder-line"></span><span class="oi-placeholder-block oi-placeholder-short"></span></div>
+      <div class="oi-card"><div class="oi-card-head"><span class="oi-placeholder-block oi-placeholder-mark"></span><span class="oi-placeholder-block oi-placeholder-title"></span></div><span class="oi-placeholder-block oi-placeholder-line"></span><span class="oi-placeholder-block oi-placeholder-short"></span></div>
+      <div class="oi-card"><div class="oi-card-head"><span class="oi-placeholder-block oi-placeholder-mark"></span><span class="oi-placeholder-block oi-placeholder-title"></span></div><span class="oi-placeholder-block oi-placeholder-line"></span><span class="oi-placeholder-block oi-placeholder-short"></span></div>
+    </div>
+    <ul class="oi-card-track" id="oi-review-cards" data-i18n-label="cards.list" hidden></ul>
+    <div class="oi-state" id="oi-card-state">
+      <span class="oi-state-icon" aria-hidden="true"></span>
+      <div class="oi-state-copy" role="status"><div class="oi-state-title"></div><p></p></div>
+      <button type="button" class="oi-state-retry" hidden data-i18n="action.retry"></button>
+    </div>
+    <p class="oi-summary-notice" id="oi-summary-notice" role="status"></p>
+  </section>
+  <div class="oi-shell">
+    <header class="oi-top">
+      <div class="oi-brand"><span class="oi-glyph"><i data-lucide="shield" aria-hidden="true"></i></span>Activity Observer</div>
+      <div class="oi-top-meta">
+        <div class="oi-period" id="oi-period" hidden>
+          <button type="button" id="oi-range-field" aria-haspopup="dialog" aria-controls="oi-calendar" aria-expanded="false">
+            <i data-lucide="calendar-days" aria-hidden="true"></i><span id="oi-range-label"></span>
+          </button>
+          <button type="button" id="oi-today" data-i18n="period.today"></button>
+        </div>
+        <button type="button" id="oi-report-toggle" class="oi-report-toggle" aria-haspopup="dialog" hidden data-i18n="report.title"></button>
+        <span id="oi-review-date"></span><span class="oi-check" id="oi-integrity" hidden><span class="oi-check-dot"></span><span data-i18n="integrity.verified"></span></span>
+      </div>
+    </header>
+    <div class="oi-layout">
+      <aside class="oi-sidebar" data-i18n-label="nav.select">
+        <div class="oi-nav-head"><span data-i18n="nav.heading"></span><span id="oi-app-total"></span></div>
+        <div class="oi-list-placeholder" aria-hidden="true"><span class="oi-placeholder-block"></span><span class="oi-placeholder-block"></span><span class="oi-placeholder-block"></span><span class="oi-placeholder-block"></span><span class="oi-placeholder-block"></span></div>
+        <nav class="oi-nav-scroll" data-i18n-label="nav.list"><div id="oi-apps"></div></nav>
+        <div class="oi-nav-note"><div class="oi-badge-key" id="oi-badge-key"><span class="oi-badge"><i data-lucide="circle-check" aria-hidden="true"></i></span><span data-i18n="status.normal"></span><span class="oi-badge" data-status="attention"><i data-lucide="circle-alert" aria-hidden="true"></i></span><span data-i18n="status.attention"></span></div><span id="oi-total-rows"></span><span id="oi-badge-caption"><br><span data-i18n="nav.badgeCaption"></span></span></div>
+      </aside>
+      <main class="oi-main" tabindex="-1">
+        <div class="oi-main-placeholder" id="oi-main-placeholder" aria-hidden="true">
+          <div class="oi-placeholder-heading"><span class="oi-placeholder-block oi-placeholder-title"></span><span class="oi-placeholder-block oi-placeholder-mark"></span></div>
+          <span class="oi-placeholder-block oi-placeholder-tabs"></span>
+          <div class="oi-placeholder-metrics"><span class="oi-placeholder-block"></span><span class="oi-placeholder-block"></span><span class="oi-placeholder-block"></span><span class="oi-placeholder-block"></span></div>
+          <span class="oi-placeholder-block oi-placeholder-chart"></span>
+          <span class="oi-placeholder-block oi-placeholder-line"></span><span class="oi-placeholder-block oi-placeholder-short"></span>
+        </div>
+        <div class="oi-state" id="oi-main-state">
+          <span class="oi-state-icon" aria-hidden="true"></span>
+          <div class="oi-state-copy" role="status"><div class="oi-state-title"></div><p></p></div>
+          <button type="button" class="oi-state-retry" hidden data-i18n="action.retry"></button>
+        </div>
+        <div id="oi-main-content">
+        <div class="oi-main-head">
+          <div class="oi-mobile-select"><label class="oi-sr" for="oi-app-select" data-i18n="nav.select"></label><select id="oi-app-select"></select></div>
+          <div class="oi-breadcrumb"><span data-i18n="view.breadcrumb"></span><span id="oi-view-kind" data-i18n="view.daily"></span></div>
+          <div class="oi-heading"><div class="oi-title-group"><div class="oi-title-line"><h2 id="oi-app-title"></h2><span id="oi-app-badge"></span></div><div class="oi-id" id="oi-app-identity"></div></div><span class="oi-app-mark" id="oi-app-mark" aria-hidden="true"></span></div>
+          <p class="oi-context" id="oi-app-context"></p>
+          <p class="oi-period-status" id="oi-period-status" role="status"></p>
+        </div>
+        <div class="oi-tabs" role="tablist" data-i18n-label="tabs.label">
+          <button type="button" role="tab" data-tab="all" aria-selected="true" aria-controls="oi-content" id="oi-tab-all" data-i18n="tab.all"></button>
+          <button type="button" role="tab" data-tab="files" aria-selected="false" aria-controls="oi-content" id="oi-tab-files" data-i18n="group.files"></button>
+          <button type="button" role="tab" data-tab="launch" aria-selected="false" aria-controls="oi-content" id="oi-tab-launch" data-i18n="group.launch"></button>
+          <button type="button" role="tab" data-tab="inputs" aria-selected="false" aria-controls="oi-content" id="oi-tab-inputs" data-i18n="group.inputs"></button>
+          <button type="button" role="tab" data-tab="network" aria-selected="false" aria-controls="oi-content" id="oi-tab-network" data-i18n="group.network"></button>
+        </div>
+        <div class="oi-content" id="oi-content" role="tabpanel" aria-labelledby="oi-tab-all">
+          <section class="oi-metrics" data-i18n-label="metrics.region"><div class="oi-stats" id="oi-stats"></div></section>
+          <section id="oi-hourly" data-viz-composition data-i18n-label="chart.region">
+            <div class="oi-section-head"><h3 id="oi-chart-title" data-i18n="chart.placeholderTitle"></h3><span class="oi-section-count" id="oi-chart-total"></span></div>
+            <div class="oi-chart-slot">
+              <div class="oi-placeholder-block oi-placeholder-chart" id="oi-chart-loading" aria-hidden="true"></div>
+              <div data-viz-container id="oi-chart-container"></div>
+              <div class="oi-state oi-chart-status" id="oi-chart-empty" hidden>
+                <span class="oi-state-icon"><i data-lucide="chart-no-axes-column" aria-hidden="true"></i></span>
+                <div class="oi-state-copy" role="status"><div class="oi-state-title" data-i18n="chart.noTraffic.title"></div><p data-i18n="chart.noTraffic.body"></p></div>
+              </div>
+              <div class="oi-state oi-chart-status" id="oi-chart-error" hidden>
+                <span class="oi-state-icon"><i data-lucide="circle-alert" aria-hidden="true"></i></span>
+                <div class="oi-state-copy" role="status"><div class="oi-state-title" data-i18n="chart.error.title"></div><p data-i18n="chart.error.body"></p></div>
+              </div>
+            </div>
+          </section>
+          <div id="oi-details"></div>
+        </div>
+        <footer class="oi-footer"><span id="oi-footer-status"></span><span id="oi-attachment-status" role="status" hidden></span><button type="button" id="oi-investigate" class="oi-investigate" hidden><span class="oi-glyph"><i data-lucide="scan-search" aria-hidden="true"></i></span><span data-i18n="action.investigate"></span></button></footer>
+        </div>
+        <div class="oi-sr" aria-live="polite" id="oi-selection-announcement"></div>
+      </main>
+    </div>
+  </div>
+  <p class="oi-sr" id="oi-loading-status" role="status"></p>
+  <div class="oi-calendar" id="oi-calendar" popover role="dialog" data-i18n-label="calendar.label">
+    <header class="oi-calendar-head">
+      <button class="oi-calendar-nav" type="button" id="oi-calendar-prev" data-i18n-label="calendar.previous"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+      <h2 id="oi-calendar-month" aria-live="polite"></h2>
+      <button class="oi-calendar-nav" type="button" id="oi-calendar-next" data-i18n-label="calendar.next"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+    </header>
+    <div class="oi-calendar-week" id="oi-calendar-week" aria-hidden="true"></div>
+    <div class="oi-calendar-days" id="oi-calendar-days" role="group" aria-labelledby="oi-calendar-month"></div>
+    <p class="oi-calendar-hint" id="oi-calendar-hint" role="status"></p>
+  </div>
+  <div class="oi-selection" id="oi-selection" popover="manual" role="dialog" data-i18n-label="annotation.dialog">
+    <strong class="oi-selection-title" id="oi-selection-label"></strong>
+    <label class="oi-sr" for="oi-annotation" data-i18n="annotation.label"></label>
+    <textarea id="oi-annotation" rows="2" maxlength="1000" data-i18n-placeholder="annotation.placeholder"></textarea>
+    <div class="oi-selection-footer"><button type="button" id="oi-selection-cancel" data-i18n="action.cancel"></button><button type="button" id="oi-selection-chat"></button></div>
+    <p class="oi-attachment-message" id="oi-annotation-status" role="status"></p>
+  </div>
+  <dialog id="oi-report" class="oi-report" aria-labelledby="oi-report-title">
+    <header><h2 id="oi-report-title" data-i18n="report.title"></h2><button type="button" id="oi-report-close" class="oi-report-close" data-i18n="report.close"></button></header>
+    <p id="oi-report-conclusion"></p>
+    <h3 data-i18n="report.activity"></h3><p id="oi-report-activity"></p>
+    <h3 data-i18n="report.collection"></h3><p id="oi-report-collection"></p>
+    <h3 data-i18n="report.integrity"></h3><p id="oi-report-integrity"></p>
+  </dialog>
+  <script>
+  window.applyActivityObserverHostContext = (() => {
+    __VIEWPORT_CODE__
+    const root = document.getElementById('security-activity');
+    const canvas = document.documentElement;
+    const legacyFrame = canvas.dataset.activityObserverCanvas !== 'flush';
+    canvas.dataset.activityObserverCanvas = 'flush';
+    let displayMode = 'inline', dimensions, availableDisplayModes = [];
+    function fitHeight() {
+      const nativeFullscreen = Boolean(document.fullscreenElement);
+      const dashboard = canvas.dataset.activityObserverMode === 'dashboard';
+      const fullscreen = dashboard || displayMode === 'fullscreen' || nativeFullscreen;
+      root.dataset.displayMode = fullscreen ? 'fullscreen' : 'inline';
+      canvas.dataset.activityObserverViewport = root.dataset.displayMode;
+      const compact = !fullscreen && displayMode === 'inline' && availableDisplayModes.includes('fullscreen');
+      root.dataset.compact = String(compact);
+      if (compact) {
+        root.style.removeProperty('height');
+        root.style.removeProperty('max-height');
+        return;
+      }
+      let bottom = 0;
+      for (let el = root; el && el !== canvas; el = el.parentElement) {
+        const style = getComputedStyle(el);
+        bottom += Math.max(0, parseFloat(style.marginBottom) || 0);
+        if (el !== root) bottom += Math.max(0, parseFloat(style.paddingBottom) || 0) + Math.max(0, parseFloat(style.borderBottomWidth) || 0);
+      }
+      const height = observerViewportHeight({
+        fullscreen, nativeFullscreen, viewportHeight: window.innerHeight, visualViewportHeight: window.visualViewport?.height,
+        containerHeight: dimensions?.height, maxHeight: dimensions?.maxHeight, top: root.getBoundingClientRect().top, bottom,
+        outerHeight: legacyFrame ? window.outerHeight : undefined, screenHeight: legacyFrame ? window.screen?.availHeight : undefined
+      });
+      root.style.height = height + 'px';
+      root.style.maxHeight = height + 'px';
+    }
+    function applyHostContext(context) {
+      if (context.theme === 'light' || context.theme === 'dark') canvas.style.colorScheme = context.theme;
+      if (Array.isArray(context.availableDisplayModes)) availableDisplayModes = context.availableDisplayModes;
+      if (typeof context.displayMode === 'string' && context.displayMode !== displayMode) {
+        displayMode = context.displayMode;
+        dimensions = undefined;
+      }
+      if (context.containerDimensions) dimensions = context.containerDimensions;
+      fitHeight();
+    }
+    window.addEventListener('resize', fitHeight);
+    window.visualViewport?.addEventListener('resize', fitHeight, { passive: true });
+    document.addEventListener('fullscreenchange', fitHeight);
+    fitHeight();
+    return applyHostContext;
+  })();
+  window.mountActivityObserver = (data, host) => {
+    __CHART_CONFIG_CODE__
+    __TIMELINE_CODE__
+    __PROGRAM_ORDER_CODE__
+    __METRICS_CODE__
+    const root = document.getElementById('security-activity');
+    root.dataset.mainState = 'ready';
+    root.dataset.listState = 'ready';
+    const q = id => root.querySelector('#' + id);
+    const applyHostContext = window.applyActivityObserverHostContext;
+    const controller = new AbortController();
+    const listen = (target, type, handler, capture = false) => target.addEventListener(type, handler, { capture, signal: controller.signal });
+    const dashboard = Boolean(host.dashboard);
+    const period = data.source.start ? { start: data.source.start, end: data.source.end } : null;
+    const selectionPeriod = period ?? {start:data.source.day,end:data.source.day};
+    const report = q('oi-report-toggle');
+    if (host.context) applyHostContext(host.context);
+    report.hidden = !data.report;
+    if (data.report) {
+      for (const key of ['conclusion', 'activity', 'collection', 'integrity']) q('oi-report-'+key).textContent=data.report[key];
+      const dialog=q('oi-report');
+      listen(report,'click',()=>dialog.showModal());
+      listen(q('oi-report-close'),'click',()=>dialog.close());
+    }
+    const compactChart = () => q('oi-chart-container').clientWidth < 740;
+    const i18n = host.i18n, tr = i18n.t, integer = i18n.integer;
+    const compact = n => n >= 10000 ? (n / 1000).toFixed(1) + 'k' : integer(n);
+    const bytes = n => n >= 1e9 ? (n / 1e9).toFixed(2) + ' GB' : n >= 1e6 ? (n / 1e6).toFixed(1) + ' MB' : n >= 1e3 ? (n / 1e3).toFixed(1) + ' KB' : integer(n) + ' B';
+    const time = i18n.time;
+    const escape = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const icons = () => host.drawIcons();
+    const appById = new Map(data.apps.map(a => [a.id,a]));
+    const catalog = data.catalog ?? data.apps;
+    const choices = new Map(catalog.map(a => [a.id,a]));
+    const appIndexes = new Map(data.apps.map((a,i) => [a.id,data.applicationIndex ?? i]));
+    const recordEntries = new Map(), revealLocations = new Map(), openedRecords = new Set();
+    const groups = {
+      files:{label:tr('group.files'),color:'#998bd5',empty:tr('group.files.empty')},
+      launch:{label:tr('group.launch'),color:'#69a99b',empty:tr('group.launch.empty')},
+      inputs:{label:tr('group.inputs'),color:'#c49a66',empty:tr('group.inputs.empty')},
+      network:{label:tr('group.network'),color:'#6e9bc7',empty:tr('group.network.empty')},
+      other:{label:tr('group.other'),color:'#91929b',empty:tr('group.other.empty')}
+    };
+    const tabIds = ['all','files','launch','inputs','network'];
+    const programs = orderPrograms(catalog);
+    let selected = appById.has(host.selection?.selected) ? host.selection.selected : programs.find(a => appById.has(a.id))?.id ?? data.apps[0]?.id;
+    let tab = host.selection?.tab ?? 'all', chart = null, connected = false, chartFactory = null, chartError = false, renderedId = null;
+    const contexts = Object.fromEntries(['inventory','system','observer','unresolved','files'].map(id => [id, tr('context.' + id)]));
+    const glyph = a => /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(a.iconData||'') ? `<img src="${a.iconData}" alt="" width="64" height="64">` : `<i data-lucide="${escape(a.icon)}" aria-hidden="true"></i>`;
+    const badge = a => a.review ? `<span class="oi-badge" data-status="${a.review.status==='normal'?'normal':'attention'}" role="img" aria-label="${escape(a.review.label)}" data-tooltip="${escape(a.review.label+' · '+a.review.reason)}"><i data-lucide="${a.review.status==='normal'?'circle-check':'circle-alert'}" aria-hidden="true"></i></span>` : '';
+    const button = a => `<button class="oi-app cursor-interaction" type="button" data-app="${escape(a.id)}" aria-label="${escape(tr('app.buttonLabel',{name:a.name,records:a.records,status:a.review?.label}))}" aria-pressed="false"><span class="oi-glyph">${glyph(a)}</span><span class="oi-app-name" data-tooltip="${escape(a.name)}">${escape(a.name)}</span><span class="oi-app-count">${compact(a.records)}</span>${badge(a)}</button>`;
+    q('oi-apps').innerHTML=programs.map(button).join('');
+    q('oi-app-total').textContent=tr('nav.groups',{count:data.applicationCount ?? catalog.length});
+    q('oi-app-select').innerHTML=programs.map(a=>`<option value="${escape(a.id)}">${escape(a.name)}${a.review?' · '+escape(a.review.label):''}</option>`).join('');
+    root.querySelectorAll('button,select,summary').forEach(el=>el.classList.add('cursor-interaction'));
+    q('oi-review-date').hidden=dashboard;
+    q('oi-review-date').textContent=i18n.day(data.source.day);
+    q('oi-badge-key').hidden=q('oi-badge-caption').hidden=Boolean(period);
+    q('oi-view-kind').textContent=tr(period?'view.period':'view.daily');
+    q('oi-total-rows').textContent=tr('source.rows',{outside:Boolean(data.source.outsideDayRows),count:data.source.rowsRead});
+    if(data.source.outsideDayRows)q('oi-total-rows').setAttribute('data-tooltip',tr('source.rowsTooltip',{reviewed:data.source.reviewedRows,outside:data.source.outsideDayRows}));
+    function publishSelection() {
+      if (!dashboard && !host.pickActivity) host.updateSelection({ programId:selected,category:tab,day:data.source.day,throughId:data.source.through });
+    }
+    const selection = q('oi-selection'), attach = q('oi-selection-chat'), annotation = q('oi-annotation');
+    const annotationStatus = q('oi-annotation-status'), attachmentStatus = q('oi-attachment-status');
+    let picked;
+    attachmentStatus.hidden = true;
+    attachmentStatus.textContent = '';
+    function closeSelection(clearChart = true) {
+      if (selection.matches(':popover-open')) selection.hidePopover();
+      picked = undefined;
+      if (clearChart) chart?.clearSelection?.();
+    }
+    const activityScope = scope => ({ ...scope, programKey: appById.get(selected).programKey,
+      throughId: data.source.through, expectedHeadHash: data.source.anchor.payload.head_hash,
+      ...(!dashboard && data.publicationHash && {reviewAfter:data.source.after,expectedPublicationHash:data.publicationHash}) });
+    function select(scope, label, point) {
+      if (!host.pickActivity || !selected || !data.source.through) return;
+      picked = activityScope(scope);
+      const title = `${appById.get(selected).name} · ${label}`;
+      q('oi-selection-label').textContent = title;
+      attach.textContent = host.selectionAction;
+      annotation.value = host.annotationComment(picked);
+      annotationStatus.textContent = '';
+      if (!selection.matches(':popover-open')) selection.showPopover();
+      host.positionPopover(selection, { x: point.clientX + 9, y: point.clientY + 9 });
+      if (point.focusMenu) annotation.focus({ preventScroll: true });
+    }
+    function pickChart(first, last, point) {
+      const a=appById.get(selected);
+      if(!a) return;
+      const bins=a.days?Object.keys(a.days).sort().map(day=>a.days[day]):a.hours;
+      const bounds=bins.slice(first,last+1).flatMap(bin=>bin.eventBounds?.[tab]?[bin.eventBounds[tab]]:[]);
+      // The arrow keys keep their position while they cross hours without records.
+      if(!bounds.length){closeSelection(!point.keyboard);return;}
+      const eventRange={firstEventId:Math.min(...bounds.map(bound=>bound.firstEventId)),lastEventId:Math.max(...bounds.map(bound=>bound.lastEventId))};
+      if(a.days){
+        const start=bins[first].h,end=bins[last].h;
+        select({start,end,category:tab,...eventRange},start===end?start:`${start} ~ ${end}`,point);
+      }else{
+        const pad=hour=>String(hour).padStart(2,'0');
+        select({...selectionPeriod,category:tab,startHour:first,endHour:last,...eventRange},tr('hour.range',{first:pad(first),last:pad(last),end:pad(last+1)}),point);
+      }
+    }
+    function showAttachmentStatus(result) {
+      attachmentStatus.textContent = tr(result === 'removed' ? 'attach.removed' : result === 'draft' ? 'attach.draft' : 'attach.added');
+      attachmentStatus.hidden = false;
+    }
+    async function attachAnnotation() {
+      if (!picked || attach.disabled) return;
+      const scope = picked;
+      attach.disabled = true;
+      try {
+        const result = await host.pickActivity(scope, q('oi-selection-label').textContent, annotation.value.trim(), false);
+        if (picked === scope) closeSelection();
+        showAttachmentStatus(result);
+      } catch (error) { if (picked === scope) annotationStatus.textContent = error.message; }
+      finally { attach.disabled = false; }
+    }
+    listen(attach, 'click', attachAnnotation);
+    listen(annotation, 'keydown', event => {
+      if (event.isComposing || event.key !== 'Enter' || !(event.metaKey || event.ctrlKey)) return;
+      event.preventDefault();
+      void attachAnnotation();
+    });
+    listen(q('oi-selection-cancel'), 'click', () => closeSelection());
+    listen(root, 'keydown', event => {
+      if (event.key !== 'Escape' || !selection.matches(':popover-open')) return;
+      event.preventDefault();
+      closeSelection();
+      q('oi-chart-container').querySelector('canvas')?.focus({ preventScroll: true });
+    });
+    listen(root, 'pointerdown', event => {
+      if (selection.matches(':popover-open') && !selection.contains(event.target)) closeSelection();
+    });
+    listen(q('oi-content'), 'scroll', () => { if (selection.matches(':popover-open')) closeSelection(); });
+    const chevron = '<span class="oi-record-chevron"><i data-lucide="chevron-right" aria-hidden="true"></i></span>';
+    const canAttachRecords = Boolean(host.pickActivity);
+    const recordScope = entry => activityScope({ ...selectionPeriod, category: entry.type, ...entry.record.sample });
+    function updateAttachments() {
+      for (const button of q('oi-details').querySelectorAll('[data-attach-record]')) {
+        const entry = recordEntries.get(button.dataset.attachRecord);
+        const attached = Boolean(entry && host.isAttached(recordScope(entry)));
+        const action = attached ? tr('action.removeFromChat') : host.selectionAction;
+        button.setAttribute('aria-pressed', String(attached));
+        button.setAttribute('aria-label', action);
+        button.title = action;
+      }
+    }
+    function recordToggle(id,record,summary,type,layout=type==='network'?'oi-endpoint':'oi-event') {
+      recordEntries.set(id,{record,type});
+      const details = `<details class="oi-record" data-record="${id}" data-observed-at="${record.last}"${openedRecords.has(id)?' open':''}><summary class="${layout} cursor-interaction">${chevron}${summary}</summary><div class="oi-record-body"></div></details>`;
+      if (!canAttachRecords || !record.sample) return details;
+      return `<div class="oi-record-row">${details}<button type="button" class="oi-record-attach" data-attach-record="${id}" aria-pressed="false"><span class="oi-add-icon"><i data-lucide="plus" aria-hidden="true"></i></span><span class="oi-attached-icon"><i data-lucide="check" aria-hidden="true"></i></span></button></div>`;
+    }
+    function fillRecord(el) {
+      const entry=recordEntries.get(el.dataset.record),body=el.querySelector('.oi-record-body');
+      if(!entry||body.dataset.filled)return;
+      const r=entry.record;
+      const label=tr(entry.type==='files'?r.kind==='program_first_seen'?'record.location.firstSeen':r.kind==='program_version_observed'?'record.location.version':'record.location.changed':'record.location.executable');
+      const canReveal=host.canReveal;
+      body.innerHTML=`<div class="oi-record-meta"><span>${tr('record.first',{time:time(r.first)})}</span><span>${tr('record.last',{time:time(r.last)})}</span>${r.records>1?`<span>${tr('record.sourceCount',{count:r.records})}</span>`:''}</div><div class="oi-location-heading">${label}${r.locations.length>1?' · '+tr('count.items',{count:r.locations.length}):''}</div>`+
+        r.locations.map((p,i)=>{
+          const id=el.dataset.record+':'+i,valid=typeof p.path==='string'&&p.path.startsWith('/')&&!p.path.includes('\u0000');
+          if(valid)revealLocations.set(id,p.path);
+          const meta=[p.records>1?tr('count.records',{count:p.records}):'',p.pids.length?tr('record.pids',{pids:p.pids.join(', ')}):''].filter(Boolean).join(' · ');
+          return `<div class="oi-location"><code>${escape(p.path)}</code><div class="oi-location-footer"><small>${meta}</small><button type="button" class="oi-reveal cursor-interaction" data-reveal="${id}"${canReveal&&valid?'':' disabled'} data-tooltip="${escape(tr(canReveal&&valid?'reveal.tooltip':'reveal.unavailable'))}">${escape(tr('reveal.action'))}</button></div></div>`;
+        }).join('')+(r.unlocatedRecords?`<div class="oi-table-note">${escape(tr('record.unlocated',{count:r.unlocatedRecords,files:entry.type==='files'}))}</div>`:'')+
+        (r.parents?.length?'<div class="oi-location-heading">'+escape(tr('record.parents'))+'</div>'+r.parents.map(p=>
+          `<div class="oi-location">${p.path?`<code>${escape(p.path)}</code>`:''}<div class="oi-location-footer"><small>PID ${escape(p.pids.join(', '))}</small></div></div>`).join(''):'')+
+        '<div class="oi-reveal-status" role="status"></div>';
+      body.dataset.filled='true';icons();
+    }
+    function activityRow(a,t) {
+        const label=t.label;
+        const suffix=t.note||(t.kind==='program_first_seen'?tr('timeline.firstSeen',{count:t.locations.length}):t.kind==='program_version_observed'?tr('timeline.versionFound',{previous:t.previousVersion,current:t.version}):t.previousVersion&&t.version&&t.previousVersion!==t.version?`${t.previousVersion} → ${t.version}`:t.kind==='program_files_changed'?tr('timeline.filesChanged'):t.group==='launch'?'':t.device||t.category);
+        return recordToggle(`a${appIndexes.get(a.id)}-e${a.activity.indexOf(t)}`,t,`<span class="oi-event-time">${time(t.last)}</span><div><div class="oi-event-label">${escape(label)}</div>${suffix?`<div class="oi-event-sub">${escape(suffix)}</div>`:''}</div><span class="oi-event-count">${t.count>1?tr('count.events',{count:t.count}):''}</span>`,t.group);
+    }
+    function events(a,g) {
+      const rows=a.activity.filter(t=>t.group===g).slice(0,20);
+      return rows.length?rows.map(t=>activityRow(a,t)).join(''):`<div class="oi-empty">${groups[g].empty}</div>`;
+    }
+    function timeline(a) {
+      const rows=activityTimeline(a).map(entry=>{
+        if(entry.type!=='network')return activityRow(a,entry.record);
+        const r=entry.record;
+        const sub=[(r.protocol||tr('network.unknownProtocol')).toUpperCase(),r.resolvedActors?tr('network.pathResolved'):'',r.byteObserved?tr('network.volume',{rx:bytes(r.rx),tx:bytes(r.tx)}):tr('network.noVolume')].filter(Boolean).join(' · ');
+        return recordToggle(`a${appIndexes.get(a.id)}-${entry.id}`,r,`<span class="oi-event-time">${time(r.last)}</span><div><div class="oi-event-label">${escape(tr('network.contact',{remote:r.remote}))}</div><div class="oi-event-sub">${escape(sub)}</div></div><span class="oi-event-count">${r.connections>1?tr('network.connections',{count:r.connections}):''}</span>`,'network','oi-event');
+      });
+      return `<section class="oi-group oi-timeline" aria-label="${escape(tr('timeline.region'))}"><div class="oi-section-head"><h3>${escape(tr('timeline.title'))}</h3><span class="oi-section-count">${escape(tr('timeline.order'))}</span></div>${rows.join('')||'<div class="oi-empty">'+escape(tr('timeline.empty'))+'</div>'}</section>`;
+    }
+    function endpoints(a) {
+      const limit=tab==='all'?3:20;
+      return a.endpoints.length?`<div class="oi-endpoint oi-endpoint-head"${canAttachRecords?' data-attach':''}><span></span><span>${escape(tr('endpoints.address'))}</span><span class="oi-right">${escape(tr('endpoints.count'))}</span><span class="oi-right">${escape(tr('endpoints.total'))}</span></div>`+a.endpoints.slice(0,limit).map(e=>recordToggle(`a${appIndexes.get(a.id)}-n${a.endpoints.indexOf(e)}`,e,`<div>${escape(e.remote)}<small>${escape((e.protocol||tr('network.unknownProtocol')).toUpperCase())}</small></div><span class="oi-right">${integer(e.connections)}</span><span class="oi-right">${e.byteObserved?bytes(e.rx+e.tx):escape(tr('value.none'))}</span>`,'network')).join(''):`<div class="oi-empty">${groups.network.empty}</div>`;
+    }
+    function renderDetails(a) {
+      recordEntries.clear();revealLocations.clear();
+      q('oi-details').innerHTML=tab==='all'?timeline(a):`<section class="oi-group" data-group="${tab}"><div class="oi-section-head"><h3 class="oi-group-title"><span class="oi-swatch" style="--oi-series:${groups[tab].color}"></span>${groups[tab].label}</h3><span class="oi-section-count">${tr('count.records',{count:a.groupRecords[tab]})}</span></div>${tab==='network'?endpoints(a):events(a,tab)}</section>`;
+      q('oi-details').querySelectorAll('.oi-record[open]').forEach(fillRecord);
+      updateAttachments();
+    }
+    function renderStats(a) {
+      const spec=programMetrics(a,tab,i18n);
+      q('oi-stats').innerHTML=spec.metrics.map(s=>{
+        const missing=s.value==null;
+        const value=missing?tr('value.none'):s.format==='bytes'?bytes(s.value):s.format==='time'?time(s.value):s.format==='text'?s.value:integer(s.value);
+        const note=!s.note?'':s.note.type==='last'?tr('record.last',{time:time(s.note.value)}):s.note.type==='traffic'?tr('metric.traffic',{rx:bytes(s.note.rx),tx:bytes(s.note.tx)}):s.note.type==='version'?`${s.note.before} → ${s.note.after}`:s.note.type==='connections'?tr('network.connections',{count:s.note.value}):s.note.value;
+        return `<div data-summary-metric="${s.id}"><button type="button" class="oi-stat-label cursor-interaction" data-tooltip="${escape(s.help)}" aria-label="${escape(tr('metric.about',{label:s.label,help:s.help}))}"><span>${escape(s.label)}</span><i data-lucide="circle-help" aria-hidden="true"></i></button><div class="oi-stat-value" data-format="${missing||s.format==='text'?'text':s.format}">${escape(value)}${!missing&&s.unit?`<span class="oi-stat-unit">${escape(s.unit)}</span>`:''}</div>${note?`<div class="oi-stat-note">${escape(note)}</div>`:''}</div>`;
+      }).join('');
+      root.querySelectorAll('[data-tab]').forEach(button=>button.setAttribute('data-tooltip',tabDescription(a,button.dataset.tab,i18n)));
+    }
+    function render(announce=false) {
+      const a=appById.get(selected);
+      if(!a)return;
+      q('oi-hourly').hidden=false;q('oi-app-select').disabled=false;
+      renderedId=selected;
+      q('oi-app-title').textContent=a.name;q('oi-app-identity').textContent=a.type+' · '+a.ids.slice(0,2).join(' · ')+(a.ids.length>2?tr('identity.more',{count:a.ids.length-2}):'');
+      q('oi-app-mark').innerHTML=glyph(a);q('oi-app-badge').innerHTML=badge(a);
+      q('oi-app-context').textContent=(!period&&contexts[a.id])||tr('context.lastSeen',{time:(period && period.start!==period.end ? i18n.monthDay(a.last)+' ':'')+time(a.last),paths:a.pathCount});
+      root.querySelectorAll('[data-app]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.app===selected)));q('oi-app-select').value=selected;
+      root.querySelectorAll('[data-tab]').forEach(b=>{
+        const current=b.dataset.tab===tab;
+        b.setAttribute('aria-selected',String(current));
+        b.tabIndex=current?0:-1;
+      });
+      q('oi-content').setAttribute('aria-labelledby','oi-tab-'+tab);
+      const missing=tab==='network'&&!a.byteSamples;
+      q('oi-chart-container').hidden=missing||chartError;
+      q('oi-chart-empty').hidden=!missing;
+      q('oi-chart-loading').hidden=connected||missing;
+      q('oi-chart-error').hidden=missing||!chartError;
+      const config=activityChart(a,tab,compactChart(),i18n);
+      if(chartFactory&&!chart&&!missing)chart=chartFactory(q('oi-chart-container'),config,host.pickActivity?pickChart:undefined);
+      else if(chart&&!missing)chart.config=config;
+      q('oi-chart-title').textContent=tr(tab==='all'?'chart.heading.all':tab==='network'?'chart.heading.network':'chart.heading.group',{daily:Boolean(a.days),group:groups[tab]?.label});
+      q('oi-chart-total').textContent=tab==='network'?tr('chart.total.bytes'):tr('count.records',{count:tab==='all'?a.records:a.groupRecords[tab]});
+      const source=data.source;
+      const footer=q('oi-footer-status');
+      if(Number.isFinite(source.storageAsOf)&&Number.isFinite(source.storageBytes)&&Number.isFinite(source.storageLimit)){
+        const asOf=i18n.stamp(source.storageAsOf);
+        footer.textContent=tr('footer.storage',{used:bytes(source.storageBytes),limit:bytes(source.storageLimit),asOf});
+        footer.setAttribute('data-tooltip',tr('footer.storageTooltip',{through:source.through}));
+      }else{
+        footer.textContent='';
+        footer.removeAttribute('data-tooltip');
+      }
+      renderStats(a);renderDetails(a);
+      if(announce)q('oi-selection-announcement').textContent=tr('announce.selection',{name:a.name,status:a.review?.label??tr('announce.periodView'),tab:tab==='all'?tr('tab.all'):groups[tab].label,records:a.records});
+      icons();
+    }
+    function changeSelection(id,nextTab=tab) {
+      if (!appById.has(id)) { host.selectProgram?.(id); return; }
+      closeSelection();selected=id;tab=nextTab;render(true);q('oi-content').scrollTop=0;publishSelection();
+    }
+    listen(root,'toggle',e=>{
+      const el=e.target;if(!(el instanceof HTMLDetailsElement)||!el.matches('.oi-record'))return;
+      if(el.open){openedRecords.add(el.dataset.record);fillRecord(el);}else openedRecords.delete(el.dataset.record);
+    },true);
+    listen(root,'click',e=>{
+      const app=e.target.closest('[data-app]'),t=e.target.closest('[data-tab]'),reveal=e.target.closest('[data-reveal]');
+      const addRecord=e.target.closest('[data-attach-record]');
+      if(addRecord){
+        const entry=recordEntries.get(addRecord.dataset.attachRecord);
+        if(!entry?.record.sample||addRecord.disabled)return;
+        const scope=recordScope(entry);
+        const label=tr('attach.recordLabel',{name:appById.get(selected).name,time:time(entry.record.last)});
+        addRecord.disabled=true;
+        host.pickActivity(scope,label,'',true).then(showAttachmentStatus).catch(error=>{
+          attachmentStatus.textContent=error.message;
+          attachmentStatus.hidden=false;
+        }).finally(()=>{addRecord.disabled=false;});
+        return;
+      }
+      if(reveal){
+        const path=revealLocations.get(reveal.dataset.reveal),status=reveal.closest('.oi-record-body').querySelector('.oi-reveal-status');
+        if(!path||!host.canReveal)return;
+        e.preventDefault();
+        reveal.disabled=true;
+        host.reveal({ locationId:reveal.dataset.reveal, throughId:data.source.through }).then(result=>{
+          status.textContent=result.parentFallback?tr('reveal.parentFallback'):'';
+        }).catch(()=>{status.textContent=tr('reveal.failed');}).finally(()=>{reveal.disabled=false;});
+        return;
+      }
+      if(app&&choices.has(app.dataset.app)){if(data.catalog)host.selectProgram?.(app.dataset.app);else changeSelection(app.dataset.app);}
+      else if(t&&tabIds.includes(t.dataset.tab))changeSelection(selected,t.dataset.tab);
+    });
+    listen(root.querySelector('[role=tablist]'),'keydown',e=>{
+      const index=tabIds.indexOf(e.target.dataset.tab);
+      if(index<0)return;
+      const next={ArrowLeft:(index+tabIds.length-1)%tabIds.length,ArrowRight:(index+1)%tabIds.length,Home:0,End:tabIds.length-1}[e.key];
+      if(next===undefined)return;
+      e.preventDefault();
+      changeSelection(selected,tabIds[next]);
+      q('oi-tab-'+tabIds[next]).focus();
+    });
+    listen(q('oi-app-select'),'change',e=>{if(data.catalog)host.selectProgram?.(e.target.value);else changeSelection(e.target.value);});
+    const follow=q('oi-investigate');
+    follow.hidden=dashboard||Boolean(host.pickActivity)||!host.canMessage;
+    if(!follow.hidden){listen(follow,'click',async()=>{
+      const reference={programId:selected,throughId:data.source.through,expectedHeadHash:data.source.anchor.payload.head_hash,
+        ...(data.publicationHash&&{expectedPublicationHash:data.publicationHash})};
+      try{await host.investigate(tr('investigate.prompt',{reference:JSON.stringify(reference),tab:groups[tab]?.label??tr('tab.all')}));}catch{q('oi-selection-announcement').textContent=tr('investigate.failed');}
+    });}
+    let narrow=compactChart();
+    const chartResize=new ResizeObserver(()=>{const next=compactChart();if(next!==narrow){narrow=next;render();}});chartResize.observe(q('oi-content'));
+    root.__observer={data,applyHostContext,updateAttachments,refreshTheme:()=>chart?.refreshTheme?.(),chartConfig:(id=selected,t=tab)=>activityChart(appById.get(id),t,compactChart(),i18n),getState:()=>({selected,tab}),connectChartFactory(f){chartFactory=f;connected=true;render();},chartFailure(){chartFactory=null;connected=true;chartError=true;render();},destroy(){controller.abort();chartResize.disconnect();chart?.destroy?.();closeSelection(false);}};
+    render();
+    q('oi-integrity').hidden = data.source.integrity !== 'verified';
+  };
+  </script>
+  <script type="module">
+    __MCP_RUNTIME_CODE__
+  </script>
+</div>

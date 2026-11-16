@@ -1,0 +1,33 @@
+(version 1)
+(allow default)
+
+(deny network*)
+(allow system-socket (require-all (socket-domain AF_SYSTEM) (socket-protocol 2)))
+(allow network-outbound (socket-domain AF_SYSTEM))
+(allow network-outbound (remote unix-socket (path-literal "/private/var/run/local.activity-observer.sock")))
+
+(deny file-write*)
+(allow file-write* (literal "/dev/null"))
+(deny process-exec)
+(allow process-exec (literal "/Library/PrivilegedHelperTools/local.activity-observer"))
+(deny process-fork)
+(deny appleevent-send)
+(deny mach-lookup)
+(allow mach-lookup
+    (global-name
+        "com.apple.SecurityServer"
+        "com.apple.audio.audiohald"
+        "com.apple.audio.coreaudiod"
+        "com.apple.cfprefsd.agent"
+        "com.apple.cfprefsd.daemon"
+        "com.apple.coreservices.launchservicesd"
+        "com.apple.distributed_notifications@1v3"
+        "com.apple.FSEvents"
+        "com.apple.iohideventsystem"
+        "com.apple.logd"
+        "com.apple.notifyd"
+        "com.apple.securityd"
+        "com.apple.system.opendirectoryd.libinfo"
+        "com.apple.tccd"
+        "com.apple.tccd.system"
+        "com.apple.windowserver.active"))

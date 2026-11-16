@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Activity Observer</title>
+  <style>
+    :root { color-scheme:light dark;font:14px/1.5 system-ui,sans-serif;color:var(--color-text-primary,light-dark(#24242b,#eeeef2));background:var(--color-background-primary,light-dark(#fcfcfd,#151518)); }
+    body { margin: 0; padding: 20px 24px; }
+    h1 { font-size: 19px; margin: 0 0 6px; }
+    p { margin: 6px 0; }
+    #status, small { color:var(--color-text-secondary,light-dark(#62626d,#aaaab6));font-size:12px;overflow-wrap:anywhere; }
+    #reasons:empty { display: none; }
+    #verification { margin: 12px 0; }
+    summary { padding:8px 0;cursor:pointer; }
+    summary:focus-visible { outline:2px solid var(--color-ring-primary,currentColor);outline-offset:2px; }
+    article { border-top:1px solid var(--color-border-primary,light-dark(#e5e5eb,#33333b));padding:12px 0; }
+    h3 { font-size: 14px; margin: 0; overflow-wrap: anywhere; }
+    code { display: block; margin: 4px 0; overflow-wrap: anywhere; }
+    [hidden] { display:none!important; }
+    .skeleton { display:grid;gap:11px;padding:4px 0; }
+    .skeleton span { display:block;height:11px;border-radius:5px;background:var(--color-background-tertiary,light-dark(#e7e7ed,#2b2b32)); }
+    .skeleton span { position:relative;overflow:hidden; }
+    .skeleton span::after { content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent,light-dark(#ffffffc7,#ffffff24),transparent);transform:translateX(-100%);animation:oi-incident-shimmer 1.8s ease-in-out infinite; }
+    @keyframes oi-incident-shimmer { 0% { transform:translateX(-100%); } 85%,100% { transform:translateX(100%); } }
+    @media(prefers-reduced-motion:reduce) { .skeleton span::after { animation:none;display:none; } }
+    .skeleton span:first-child { width:54%;height:18px; }
+    .skeleton span:last-child { width:62%; }
+    .unavailable { min-height:112px;display:grid;place-content:center;justify-items:center;gap:6px;text-align:center; }
+    .unavailable svg { width:23px;height:23px;color:light-dark(#5b4cac,#b2a8ef); }
+    .unavailable h1 { margin:0;font-size:15px; }
+    .unavailable p { margin:0;color:var(--color-text-secondary,light-dark(#62626d,#aaaab6));overflow-wrap:anywhere; }
+    .sr-only { position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap; }
+  </style>
+</head>
+<body>
+  <main id="incident-content" hidden>
+    <h1 id="title"></h1>
+    <p id="status"></p>
+    <ul id="reasons"></ul>
+    <p id="verification"></p>
+    <details id="evidence-toggle" hidden><summary id="evidence-summary"></summary><div id="evidence"></div></details>
+  </main>
+  <div class="skeleton" id="incident-loading" aria-hidden="true"><span></span><span></span><span></span></div>
+  <p class="sr-only" id="incident-loading-status" role="status" data-i18n="incident.loading"></p>
+  <div class="unavailable" id="incident-unavailable" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="M12 8v4m0 4h.01"/></svg>
+    <div role="status"><h1 data-i18n="incident.unavailable"></h1><p id="incident-unavailable-reason"></p></div>
+  </div>
+  <script type="module">__INCIDENT_RUNTIME__</script>
+</body>
+</html>

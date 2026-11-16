@@ -1,0 +1,23 @@
+{
+  "name": "activity-observer-ui",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build-mcp-app.mjs",
+    "start": "node mcp-server.mjs",
+    "view": "node local-viewer.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.4.0",
+    "@modelcontextprotocol/core": "2.4.0",
+    "@modelcontextprotocol/ext-apps": "2.0.4",
+    "@modelcontextprotocol/server": "2.4.0",
+    "chart.js": "4.6.1",
+    "lucide": "1.70.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

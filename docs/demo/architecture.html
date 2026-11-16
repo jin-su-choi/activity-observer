@@ -1,0 +1,134 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+/* Source of docs/images/architecture.png (1600x940 stage, rendered at 1.5x).
+   Line icons are from Lucide (ISC). */
+*{box-sizing:border-box}html,body{margin:0;background:#0b0e1f}
+.stage{position:relative;width:1600px;height:940px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",sans-serif;color:#e8eaf6;background:radial-gradient(1200px 600px at 20% 0%,#161a3a 0%,#0b0e1f 60%)}
+.title{position:absolute;left:44px;top:30px;font-size:34px;font-weight:700;letter-spacing:-.02em}
+.sub{position:absolute;left:44px;top:78px;font-size:21px;color:#9aa0c7}
+.card{position:absolute;border-radius:20px;border:1.5px solid #2c3157;background:#141833}
+.card h3{margin:0;font-size:28px;font-weight:650;letter-spacing:-.01em;white-space:nowrap}
+.card small{display:block;margin-top:5px;font-size:19.5px;color:#9aa0c7;white-space:nowrap}
+.node{display:flex;align-items:center;gap:18px;padding:0 20px}
+.orb{flex:none;width:76px;height:76px;border-radius:50%;display:grid;place-items:center;color:#fff;background:radial-gradient(circle at 30% 25%,#a99cff,#5a4fd0 72%);box-shadow:inset 0 0 0 1.5px rgba(200,190,255,.5),0 8px 26px rgba(109,99,217,.45)}
+.orb svg{width:38px;height:38px}
+.orb.amber{background:radial-gradient(circle at 30% 25%,#ffd58a,#d9912a 72%);box-shadow:inset 0 0 0 1.5px rgba(255,226,170,.55),0 8px 26px rgba(217,145,42,.35)}
+.orb.gray{background:radial-gradient(circle at 30% 25%,#7b83b8,#3a4070 72%);box-shadow:inset 0 0 0 1.5px rgba(180,188,235,.4),0 8px 22px rgba(20,24,60,.6)}
+.accent{border-color:#6d63d9;background:#191c40}
+.role{position:absolute;right:14px;top:12px;font-size:15.5px;padding:2px 10px;border-radius:7px;font-weight:600}
+.root{background:#3b1f2a;color:#ffb3c0;border:1px solid #6b3044}.user{background:#1c2a44;color:#a8c7ff;border:1px solid #2f4a78}
+.zone{position:absolute;border:2px dashed #6d63d9;border-radius:26px;background:rgba(109,99,217,.06)}
+.zone .label{position:absolute;top:-21px;left:26px;display:flex;align-items:center;gap:10px;background:#0f1229;padding:6px 18px 6px 14px;border-radius:999px;font-size:21px;color:#c2baff;border:1.5px solid #6d63d9;font-weight:650;white-space:nowrap}
+.zone .label svg{width:24px;height:24px}
+
+/* Programs */
+.programs{padding:20px}
+.programs .head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.programs .apps{position:relative;flex:none;width:66px;height:56px}
+.programs .apps i{position:absolute;width:38px;height:38px;border-radius:11px;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.programs .apps i:nth-child(1){left:0;top:16px;background:linear-gradient(135deg,#ffb86b,#ef6f5e)}
+.programs .apps i:nth-child(2){left:26px;top:2px;background:linear-gradient(135deg,#6fe3d0,#2a9fb3)}
+.programs .apps i:nth-child(3){left:16px;top:18px;background:linear-gradient(135deg,#b3a8ff,#6657e0);display:grid;place-items:center;color:#fff}
+.programs .apps svg{width:22px;height:22px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sig{height:106px;border-radius:16px;background:#1a1e44;border:1px solid #2f3566;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;font-size:18.5px;color:#d3d7f3;white-space:nowrap}
+.sig svg{width:34px;height:34px}
+.teal{color:#5fe0cc}.violet{color:#b0a5ff}.amberc{color:#f6c267}
+.sig span{color:#d3d7f3}
+
+/* Guarantees */
+.promise{position:absolute;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:0 6px}
+.promise div{display:flex;align-items:center;gap:14px;font-size:21px;font-weight:600;color:#e3e5fb;white-space:nowrap}
+.promise b{flex:none;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:#241f4d;border:1px solid #4a41a6;color:#c2baff}
+.promise svg{width:26px;height:26px}
+
+/* Signed log */
+.log{border-color:#8b7cf6;background:#1c1d4a;padding:18px 20px}
+.log .head{display:flex;align-items:center;gap:16px}
+.log .orb{width:60px;height:60px}.log .orb svg{width:30px;height:30px}
+.log .chain{display:block;width:280px;height:60px;margin-top:16px}
+.log .facts{display:flex;gap:8px;margin-top:14px}
+.log .facts span{display:flex;align-items:center;gap:6px;font-size:17px;color:#cfd2f2;background:#252762;border:1px solid #3d3f8c;border-radius:999px;padding:5px 11px 5px 9px;white-space:nowrap}
+.log .facts svg{width:17px;height:17px;color:#b0a5ff}
+
+/* Agent */
+.agent{border-color:#2aa795;background:#102a2b;text-align:center}
+.agent h3{color:#8ff0df;font-size:30px}
+.agent .hero{position:relative;height:158px;margin-top:14px}
+.agent .hero img{position:absolute;left:50%;top:2px;width:306px;transform:translateX(-50%);filter:drop-shadow(0 10px 18px rgba(0,0,0,.45))}
+.agent .does{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px;margin-top:16px}
+.agent .does div{height:96px;border-radius:14px;background:#143537;border:1px solid #24605a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-size:17px;line-height:1.15;color:#d5f4ee}
+.agent .does svg{width:28px;height:28px;color:#6fe3d0}
+.cloud{border-style:dashed;border-color:#5b6092;background:#10132a}
+.you{border-color:#3a406e;background:#151936}
+
+.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.tag{position:absolute;display:flex;align-items:center;gap:6px;font-size:18.5px;color:#aab0d8;background:#0b0e1f;padding:3px 9px;border-radius:8px;white-space:nowrap}
+.tag svg{width:18px;height:18px}
+.tag.green{color:#8ff0df}
+</style></head><body><div class="stage">
+<div class="title">How Activity Observer works</div>
+<div class="sub">The collector only records. Your agent does the judging.</div>
+
+<div class="card programs" style="left:44px;top:170px;width:300px;height:586px">
+  <div class="head"><div class="apps"><i></i><i></i><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg></i></div><div><h3>Programs</h3><small>on your Mac</small></div></div>
+  <div class="grid">
+    <div class="sig"><b class="teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></b><span>Network</span></div>
+    <div class="sig"><b class="violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8h.01"/><path d="M12 12h.01"/><path d="M14 8h.01"/><path d="M16 12h.01"/><path d="M18 8h.01"/><path d="M6 8h.01"/><path d="M7 16h10"/><path d="M8 12h.01"/><rect width="20" height="16" x="2" y="4" rx="2"/></svg></b><span>Keyboard</span></div>
+    <div class="sig"><b class="violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg></b><span>Screen</span></div>
+    <div class="sig"><b class="violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg></b><span>Camera</span></div>
+    <div class="sig"><b class="violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg></b><span>Microphone</span></div>
+    <div class="sig"><b class="amberc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg></b><span>Installs</span></div>
+    <div class="sig"><b class="amberc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09"/><path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05"/></svg></b><span>Autostart</span></div>
+    <div class="sig"><b class="amberc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M4 12v6"/><path d="M4 14h2"/><path d="M9.65 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v4"/><circle cx="4" cy="20" r="2"/></svg></b><span>Key files</span></div>
+  </div>
+</div>
+
+<div class="zone" style="left:392px;top:150px;width:716px;height:696px"><div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Activity Observer</div></div>
+
+<div class="card node accent" style="left:416px;top:210px;width:320px;height:128px"><div class="orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg></div><div><h3>Sensor</h3><small>watches programs</small></div><span class="role user">user</span></div>
+<div class="card node accent" style="left:416px;top:396px;width:320px;height:128px"><div class="orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 17-2.156-1.868A.5.5 0 0 0 18 15.5v.5a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1c0-2.545-3.991-3.97-8.5-4a1 1 0 0 0 0 5c4.153 0 4.745-11.295 5.708-13.5a2.5 2.5 0 1 1 3.31 3.284"/><path d="M3 21h18"/></svg></div><div><h3>Writer</h3><small>signs every record</small></div><span class="role root">root</span></div>
+<div class="card log" style="left:416px;top:582px;width:320px;height:232px">
+  <div class="head"><div class="orb amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div><h3>Signed log</h3><small>stays on your Mac</small></div></div>
+  <svg class="chain" viewBox="0 0 280 60">
+    <g stroke="#8b90c9" stroke-width="3" stroke-linecap="round"><path d="M52 30H76M128 30H152M204 30H228"/></g>
+    <g><rect x="0" y="8" width="52" height="44" rx="12" fill="#6d63d9"/><rect x="76" y="8" width="52" height="44" rx="12" fill="#2fb8a4"/><rect x="152" y="8" width="52" height="44" rx="12" fill="#6d63d9"/><rect x="228" y="8" width="52" height="44" rx="12" fill="#f0b445"/></g>
+    <g stroke="#fff" stroke-opacity=".7" stroke-width="3.2" stroke-linecap="round"><path d="M13 24H39M13 36H31M89 24H115M89 36H107M165 24H191M165 36H183"/></g>
+    <g stroke="#3a2a05" stroke-opacity=".8" stroke-width="3.2" stroke-linecap="round"><path d="M241 24H267M241 36H259"/></g>
+  </svg>
+  <div class="facts"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>hash-chained</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 16h.01"/><path d="M2.212 11.577a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><path d="M21.946 12.013H2.054"/><path d="M6 16h.01"/></svg>1 GB limit</span></div>
+</div>
+
+<div class="promise" style="left:780px;top:210px;width:304px;height:128px"><div><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></svg></b>No internet access</div><div><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></b>Built from source</div></div>
+<div class="card node accent" style="left:780px;top:396px;width:304px;height:128px"><div class="orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M4 6h.01"/><path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/><path d="M16.24 7.76A6 6 0 1 0 8.23 16.67"/><path d="M12 18h.01"/><path d="M17.99 11.66A6 6 0 0 1 15.77 16.67"/><circle cx="12" cy="12" r="2"/><path d="m13.41 10.59 5.66-5.66"/></svg></div><div><h3>Detector</h3><small>every 30 seconds</small></div><span class="role user">user</span></div>
+<div class="card node accent" style="left:780px;top:626px;width:304px;height:128px"><div class="orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"/><path d="M15 8V2"/><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"/><path d="M9 8V2"/></svg></div><div><h3>MCP server</h3><small>read-only tools</small></div><span class="role user">user</span></div>
+
+<div class="card node cloud" style="left:1214px;top:170px;width:346px;height:112px"><div class="orb gray"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></div><div><h3>Model provider</h3><small>OpenAI or Anthropic</small></div></div>
+<div class="card agent" style="left:1214px;top:350px;width:346px;height:384px">
+  <div class="hero"><img src="../images/mascot.png" alt=""></div>
+  <h3>Your agent</h3><small>Codex or Claude Code</small>
+  <div class="does"><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="m9 15 2 2 4-4"/></svg>Daily<br>review</div><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18v-6a5 5 0 1 1 10 0v6"/><path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z"/><path d="M21 12h1"/><path d="M18.5 4.5 18 5"/><path d="M2 12h1"/><path d="M12 2v1"/><path d="m4.929 4.929.707.707"/><path d="M12 12v6"/></svg>Incident<br>review</div><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>Dashboard<br>and chat</div></div>
+</div>
+<div class="card node you" style="left:1214px;top:794px;width:346px;height:112px"><div class="orb gray"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><h3>You</h3><small>read, ask, decide</small></div></div>
+
+<svg class="wires" viewBox="0 0 1600 940"><defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#8b90c9"/></marker>
+<marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#4fd1bd"/></marker></defs>
+<g fill="none" stroke="#8b90c9" stroke-width="2.5">
+<path d="M344 274 H413" marker-end="url(#a)"/>
+<path d="M576 338 V393" marker-end="url(#a)"/>
+<path d="M576 524 V579" marker-end="url(#a)"/>
+<path d="M736 690 H777" marker-end="url(#a)"/>
+<path d="M736 640 H748 Q758 640 758 630 V470 Q758 460 768 460 H777" marker-end="url(#a)"/>
+</g>
+<g fill="none" stroke="#4fd1bd" stroke-width="2.5">
+<path d="M1084 460 H1211" marker-end="url(#g)"/>
+<path d="M1087 690 H1211" marker-end="url(#g)" marker-start="url(#g)"/>
+<path d="M1387 737 V791" marker-end="url(#g)" marker-start="url(#g)"/>
+</g>
+<path d="M1387 347 V285" fill="none" stroke="#8b90c9" stroke-width="2.5" stroke-dasharray="7 7" marker-end="url(#a)"/>
+</svg>
+<div class="tag green" style="left:1114px;top:420px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M22 8c0-2.3-.8-4.3-2-6"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/></svg>alert</div>
+<div class="tag green" style="left:1114px;top:650px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>reads</div>
+<div class="tag green" style="left:1402px;top:750px">reports, questions</div>
+<div class="tag" style="left:1402px;top:302px">what it reads</div>
+</div></body></html>

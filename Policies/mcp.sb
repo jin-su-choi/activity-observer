@@ -1,0 +1,32 @@
+(version 1)
+(allow default)
+
+(deny network*)
+(allow network-outbound (remote unix-socket (path-literal "/private/var/run/local.activity-observer.sock")))
+(allow network-outbound (remote ip "localhost:47652"))
+
+(deny file-write*)
+(allow file-write* (literal "/dev/null"))
+(deny process-exec)
+(allow process-exec
+    (literal (param "AO_NODE"))
+    (regex #"/Library/Application Support/ActivityObserver UI/UI/mcp-relay$")
+    (literal "/Library/PrivilegedHelperTools/local.activity-observer")
+    (literal "/usr/bin/open")
+    (literal "/Library/Application Support/ActivityObserver/bin/page-verify"))
+(deny appleevent-send)
+(allow appleevent-send (appleevent-destination "com.apple.finder"))
+(deny mach-lookup)
+(allow mach-lookup
+    (global-name
+        "com.apple.SecurityServer"
+        "com.apple.cfprefsd.agent"
+        "com.apple.cfprefsd.daemon"
+        "com.apple.coreservices.launchservicesd"
+        "com.apple.finder.ServiceProvider"
+        "com.apple.pasteboard.1"
+        "com.apple.pbs.fetch_services"
+        "com.apple.logd"
+        "com.apple.notifyd"
+        "com.apple.securityd"
+        "com.apple.system.opendirectoryd.libinfo"))

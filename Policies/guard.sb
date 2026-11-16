@@ -1,0 +1,27 @@
+(version 1)
+(allow default)
+
+(deny network*)
+(allow network-bind (local unix-socket (path-literal "/private/var/run/local.activity-observer.sock")))
+(allow network-inbound (local unix-socket (path-literal "/private/var/run/local.activity-observer.sock")))
+
+(deny file-write*)
+(allow file-write*
+    (subpath "/Library/Application Support/ActivityObserver/data")
+    (path-literal "/private/var/run/local.activity-observer.sock")
+    (literal "/dev/null"))
+
+(deny process-exec)
+(allow process-exec (literal "/Library/PrivilegedHelperTools/local.activity-observer"))
+(deny process-fork)
+(deny appleevent-send)
+(deny mach-lookup)
+(allow mach-lookup
+    (global-name
+        "com.apple.SecurityServer"
+        "com.apple.cfprefsd.daemon"
+        "com.apple.logd"
+        "com.apple.notifyd"
+        "com.apple.securityd"
+        "com.apple.system.opendirectoryd.libinfo"
+        "com.apple.taskgated"))
