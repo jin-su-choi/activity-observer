@@ -8,7 +8,8 @@
 // dashboard.html, daily-review.html or alert.html on http://127.0.0.1:47891 in
 // a browser set to the same time zone. The pictures were taken with Luma
 // Launcher and its Network tab open, and in the dashboard with the 13:00 hour
-// of the chart selected and added to the chat.
+// of the chart selected and a note typed. The window around the widgets is
+// drawn by scene.css and demo-chrome.mjs to look like the Codex desktop app.
 import { createServer } from 'node:http';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
@@ -153,7 +154,7 @@ function call(name, args, scene) {
   return { isError: true, content: [{ type: 'text', text: 'Not available in the demo' }] };
 }
 
-const types = { '.css': 'text/css', '.png': 'image/png', '.html': 'text/html; charset=utf-8' };
+const types = { '.css': 'text/css', '.png': 'image/png', '.html': 'text/html; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8' };
 createServer(async (request, response) => {
   const url = new URL(request.url, 'http://127.0.0.1');
   const send = (type, body) => { response.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store' }); response.end(body); };

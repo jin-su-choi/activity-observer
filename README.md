@@ -43,6 +43,8 @@ What the agent lacks is eyes. It only sees what you paste into the chat. Activit
 
 ## What you get
 
+The pictures show the real widgets with made-up data, inside a redrawn Codex window.
+
 ### A daily review in your chat
 
 Once a day the agent verifies the log, reads a digest of everything since the last review, judges each program and reports. The report comes with an inline widget where you can open any program and see its timeline.
@@ -57,9 +59,9 @@ A detector checks new records every 30 seconds. When a program does something un
 
 ### A dashboard you can ask about
 
-In Codex the dashboard also opens as a side-panel app: live activity, any date range, per-program timelines. Select a stretch of the chart or a single record and it is attached to your next message.
+In Codex the dashboard is also an app of its own, opened from the navigation rail or next to a chat: live activity, any date range, per-program timelines. Select a stretch of the chart or a single record, add a note, and it is attached to the chat.
 
-<p align="center"><img src="docs/images/demo-dashboard.png" alt="The activity dashboard with a selected time range attached to a question" width="100%"></p>
+<p align="center"><img src="docs/images/demo-dashboard.png" alt="The activity dashboard with one hour of the chart selected and a note being added to the chat" width="100%"></p>
 
 ### Light enough to forget
 

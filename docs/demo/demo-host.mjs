@@ -3,6 +3,9 @@
 import { AppBridge, PostMessageTransport } from '@modelcontextprotocol/ext-apps/app-bridge';
 
 const scene = document.body.dataset.scene;
+// The colors Codex hands to an app in its dark theme, read off the app's own rendering.
+const codexDark = { '--color-background-primary': '#181818', '--color-background-secondary': '#353535', '--color-background-tertiary': '#404040',
+  '--color-text-primary': '#ffffff', '--color-text-secondary': 'rgba(255, 255, 255, .65)', '--color-border-primary': 'rgba(255, 255, 255, .16)', '--color-ring-primary': '#d5d2f0' };
 const json = { 'Content-Type': 'application/json' };
 
 async function connect(frame) {
@@ -11,7 +14,7 @@ async function connect(frame) {
     fetch('/widget/' + widget + '.html').then(response => response.text()),
     fetch('/result?scene=' + scene + '&tool=' + tool).then(response => response.json())
   ]);
-  const context = () => ({ theme: 'dark', displayMode: mode, availableDisplayModes: ['inline', 'fullscreen'], locale: 'en-US', timeZone: 'America/Los_Angeles',
+  const context = () => ({ theme: 'dark', styles: { variables: codexDark }, displayMode: mode, availableDisplayModes: ['inline', 'fullscreen'], locale: 'en-US', timeZone: 'America/Los_Angeles',
     containerDimensions: mode === 'inline' ? { width: frame.clientWidth, maxHeight: 900 } : { height: frame.clientHeight, width: frame.clientWidth },
     toolInfo: { tool: initial.tool, id: 'demo-' + widget } });
   const bridge = new AppBridge(null, { name: 'Activity Observer demo host', version: '1.0.0' },
