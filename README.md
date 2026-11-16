@@ -35,11 +35,46 @@ Personal computers have become the way in.
 
 ## The idea
 
-Traditional security software decides with signatures and rules that a vendor ships. A new technique passes until the vendor catches up, a harmless program is sometimes blocked, and the product that makes these decisions is heavy, privileged and updated from outside.
+> **An expert security analyst is already on your computer: your agent.**<br>
+> **Activity Observer shows it what every program does. The agent does the judging.**
 
-Meanwhile a capable security analyst is already installed on many computers: the coding agent. It can read a week of activity, notice that a launcher which never uploaded anything just sent 40 MB to an address it first contacted two minutes ago, check what changed in that program beforehand, and explain it in plain language. People have already caught [an intrusion](https://stratechery.com/2026/apple-and-a-hackers-future/) and [a crypto miner](https://www.tomshardware.com/tech-industry/cryptomining/claude-code-ai-agent-caught-a-crypto-miner-hiding-on-a-developers-overheating-mac-xmrig-task-was-hogging-about-1175-percent-cpu-roughly-12-cores-pushing-temps-to-112-degrees) this way.
+### Security software cannot keep up
 
-What the agent lacks is eyes. It only sees what you paste into the chat. Activity Observer gives it a continuous, tamper-evident record of what programs do, and a routine for reviewing it. Detection and judgment are delegated to the agent. The local part stays small enough to audit.
+Security software decides with signatures and rules that its vendor ships. Attacks now change faster than those rules, and the product itself has become a target.
+
+| | Security software | Your agent with Activity Observer |
+| --- | --- | --- |
+| **A new attack** | Gets through until the vendor ships a rule for it | Is judged by what the program actually did. There is no rule to wait for |
+| **A wrong call** | Blocks a harmless program and stops your work | Blocks nothing. The agent explains what it saw and you decide |
+| **Load on your computer** | File scans, program hooks and traffic filtering all day | A recorder at [under 2% of one CPU core](#light-enough-to-forget). The analysis runs in the model |
+| **As a target** | Privileged, self-updating and trusted by default. Attackers [keep using it as the way in](#why-now) | [No network access and no updater](#a-small-trusted-base). Built from source you can read |
+
+### The expert is already on your computer
+
+The latest GPT and Claude models are expert security analysts, and anyone can use one. Given a record of what happened, an agent can:
+
+- **Go through a whole day**, program by program, every day.
+- **Notice what does not fit**, such as a launcher that never uploaded anything sending 40 MB to an address it first contacted two minutes earlier.
+- **Check the context**: whether the program's files or signer changed beforehand, what started it and where else it connected.
+- **Explain it in plain language**, including what it could not see.
+
+Nobody has to write a rule for any of this in advance. The agent judges each case as an analyst would. People have already caught [an intrusion](https://stratechery.com/2026/apple-and-a-hackers-future/) and [a crypto miner](https://www.tomshardware.com/tech-industry/cryptomining/claude-code-ai-agent-caught-a-crypto-miner-hiding-on-a-developers-overheating-mac-xmrig-task-was-hogging-about-1175-percent-cpu-roughly-12-cores-pushing-temps-to-112-degrees) this way.
+
+### All it lacks is a view of your computer
+
+An agent sees only what you paste into the chat. Activity Observer adds what it needs to do the job on its own.
+
+- **A record.** A continuous, signed log of what every program does: where it connects and how much it sends, when it uses the keyboard, screen, camera or microphone, and what gets installed or set to start automatically.
+- **A routine.** A review of everything once a day, and an alert within about a minute when a program acts out of pattern. A few fixed rules pick what is urgent enough to send right away. The verdict is still the agent's.
+- **A place to ask.** A dashboard inside the agent, where you select whatever looks odd and ask about it.
+
+### Who does what
+
+| Activity Observer | Your agent | You |
+| --- | --- | --- |
+| **Records.** It keeps the log and flags what is urgent. It has no signature database, reaches no verdict and blocks nothing. | **Judges.** It reviews the record, investigates each alert and tells you what it found. | **Decide.** You read the report, ask questions and choose what to do. The agent is told to change nothing without you. |
+
+Everything that needs judgment is left to the agent. That keeps the part you install small enough to read before you run it.
 
 ## What you get
 
