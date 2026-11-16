@@ -4,7 +4,7 @@
 
 | Kind | Fields |
 | --- | --- |
-| Network connections | Program (bundle identifier or executable name, path, process ID), remote IP address and port, protocol, local address, bytes sent and received per minute, the paths of parent programs, start and end of a connection. Repeated connections to one destination within five minutes are merged into a count. |
+| Network connections over sockets | Program (bundle identifier or executable name, path, process ID), remote IP address and port, protocol, local address, bytes sent and received per minute, the paths of parent programs, start and end of a connection. Repeated connections to one destination within five minutes are merged into a count. |
 | Input access | Programs that hold a keyboard event tap or open a HID device, and the device name. |
 | Screen, camera, microphone | Which program started and stopped using them, from the system's own privacy indicators. |
 | Privacy permission decisions | Program, permission (for example Accessibility, Screen Recording, Full Disk Access), allowed or denied. One record per combination every six hours. |

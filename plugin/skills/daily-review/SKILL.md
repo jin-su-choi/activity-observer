@@ -1,11 +1,13 @@
 ---
 name: daily-review
-description: Run the daily security review of this Mac. Verifies the signed Activity Observer log, investigates what stood out since the last review and reports a verdict: no threat found, threat confirmed or needs deeper inspection. Use for the scheduled daily review or when the user asks whether anything suspicious happened on their Mac recently.
+description: Run the daily security review of this Mac. Verifies the signed Activity Observer log, investigates what stood out since the last review, hands a lead it cannot close to a deep inspection by a stronger model, and reports a verdict: no threat found, threat confirmed or needs deeper inspection. Use for the scheduled daily review or when the user asks whether anything suspicious happened on their Mac recently.
 ---
 
 # Daily security review
 
-The user wants one answer from this review: is there a threat on this Mac. Read the security-analyst skill of this plugin first (`../security-analyst/SKILL.md`). It has the method, the checks and the report format. This skill adds the procedure of the daily run.
+The user wants one answer from this review: is there a threat on this Mac. Read the security-analyst skill of this plugin first (`../security-analyst/SKILL.md`). It has the order of work, the playbooks, the checks and the report format. This skill adds the procedure of the daily run.
+
+The review may run on a small model. That is intended: follow the playbooks step by step, and let the deep inspection take what they do not close. The user is not asked to investigate.
 
 ```sh
 OBSERVER="$HOME/Library/Application Support/ActivityObserver UI/UI/observer"
@@ -43,7 +45,7 @@ If it fails, stop. The failure is the finding: report it with the verdict it sup
 
 ## 4. Investigate
 
-Everything the digest marks is a lead: each flag, each incident that this chat has not reviewed yet, each change to autostart items and sensitive files, each collection gap, and anything else that is new or out of pattern for a program. Work every lead as the security-analyst skill describes until it is explained or shown to be unexplained. The digest tells you where to look. The answer usually comes from a check on the Mac: the signer of a file, the owner of an address, what an autostart item runs.
+Everything the digest marks is a lead: each flag, each incident that this chat has not reviewed yet, each change to autostart items and sensitive files, each collection gap, and anything else that is new or out of pattern for a program. Write the list of leads first. Then close each one with its playbook in the security-analyst skill: Expected or Malicious with the evidence, or Open. The digest tells you where to look. The answer usually comes from a check on the Mac: the signer of a file, the owner of an address, what an autostart item runs.
 
 For more records use the MCP tools: `read_selected_activity` with the program's `programKey`, the anchor's `head_id` as `throughId` and `head_hash` as `expectedHeadHash`, a date range and a category.
 
@@ -51,19 +53,23 @@ A collection gap is a lead about coverage. Find what was happening at that secon
 
 Spend the time on leads and none on describing normal activity.
 
-## 5. Decide
+## 5. Escalate what is still open
+
+If any lead is Open, start one deep inspection for all of them as the security-analyst skill describes, and wait for its result. Do not ask the user first. A published review cannot be changed, so this comes before publishing.
+
+## 6. Decide
 
 Choose one verdict for the review: `clear`, `threat` or `inconclusive`. Then give each program that was a lead a status and a one-sentence reason that names the evidence:
 
 - `normal`: the lead was explained.
-- `attention`: the lead is unresolved.
+- `attention`: the lead is still unresolved after the deep inspection, or none could be started.
 - `threat`: the program did something malicious.
 
 When the remaining programs raised no lead, say so once in `others`. Without it they are shown as not reviewed.
 
 The verdict and the findings have to agree. `clear` means no program is left at `attention` or `threat`, and a program at `threat` makes the verdict `threat`. The publish step rejects a report that contradicts itself.
 
-## 6. Publish
+## 7. Publish
 
 Write the result to a temporary file and publish it. The tool verifies the interval again and stores the report so that the widget can show it later.
 
@@ -96,12 +102,12 @@ Write the result to a temporary file and publish it. The tool verifies the inter
 
 A published review cannot be changed. The tool stores it only when the findings are complete and agree with the verdict, and it says what is wrong otherwise. Fix the file and publish again. Delete the temporary file afterwards.
 
-## 7. Show and report
+## 8. Show and report
 
 Call the `show_activity_review` tool of the activity-observer server with `throughId`, `expectedHeadHash` and the `publicationHash` from the publish output as `expectedPublicationHash`. It shows the verdict and the programs in this chat.
 
 Then write the report in the format of the security-analyst skill: the verdict and its basis, the table of leads, what to do, and the coverage line. Put the number of records verified, the gaps and the integrity result in the coverage line. If the dashboard shows fewer records than were reviewed, the rest belong to other days. Say so there.
 
-When the verdict is `inconclusive`, offer a deep inspection with the deep-inspection skill and say what it would check. Start it without asking only when the user's standing instructions in this chat say so.
+When the verdict is `inconclusive`, say what the deep inspection tried and name the one thing that would settle the open lead. If no deep inspection could be started, end with the request and the case file as the security-analyst skill describes.
 
 End with the full signed anchor in a code block, labelled as the starting point of the next review. Chat history is kept outside this Mac, so the next review can trust it. If the review failed, repeat the previous anchor instead.

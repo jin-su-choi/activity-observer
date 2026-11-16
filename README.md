@@ -6,7 +6,7 @@
 
 **Turn the agent you already use into the security reviewer of your own computer.**
 
-Activity Observer records what every program on your Mac does: what it connects to and how much it sends, when it touches the keyboard, screen, microphone or camera, what gets installed, updated or set to start automatically. It keeps that record in a signed local log and hands it to Codex or Claude Code, together with skills that teach the agent to work as a security analyst. The agent investigates the record once a day and gives you a verdict: no threat found, threat confirmed, or needs deeper inspection. It looks into unusual activity within about a minute and answers your questions in the chat you already use.
+Activity Observer records what the programs on your Mac do: what they connect to and how much they send, when they touch the keyboard, screen, microphone or camera, what gets installed, updated or set to start automatically. It keeps that record in a signed local log and hands it to Codex or Claude Code, together with skills that teach the agent to work as a security analyst. The agent investigates the record once a day and gives you a verdict: no threat found, threat confirmed, or needs deeper inspection. It looks into unusual activity within about a minute and answers your questions in the chat you already use.
 
 The collector does not judge and does not block. It is small, has no network access and can be read in an afternoon. The judgment comes from the agent.
 
@@ -36,7 +36,7 @@ Personal computers have become the way in.
 ## The idea
 
 > **An expert security analyst is already on your computer: your agent.**<br>
-> **Activity Observer shows it what every program does. The agent does the judging.**
+> **Activity Observer shows it what your programs do. The agent does the judging.**
 
 ### Security software cannot keep up
 
@@ -64,8 +64,8 @@ Nobody has to write a rule for any of this in advance. The agent judges each cas
 
 An agent sees only what you paste into the chat. Activity Observer adds what it needs to do the job on its own.
 
-- **A record.** A continuous, signed log of what every program does: where it connects and how much it sends, when it uses the keyboard, screen, camera or microphone, and what gets installed or set to start automatically.
-- **A method.** [Skills](#skills-that-make-the-agent-an-analyst) that tell the agent how an analyst works: what counts as a lead, how to check it on the Mac, what attacks and false alarms look like in this record, and how to report. Every review ends in a verdict.
+- **A record.** A continuous, signed log of what programs do: where they connect and how much they send, when they use the keyboard, screen, camera or microphone, and what gets installed or set to start automatically.
+- **A method.** [Skills](#skills-that-make-the-agent-an-analyst) that tell the agent how an analyst works: what counts as a lead, how to check it on the Mac, what attacks and false alarms look like in this record, and how to report. Every review ends in a verdict. A lead that a small model cannot close goes to a more capable one before it ever goes to you.
 - **A routine.** A review of everything once a day, and an alert within about a minute when a program acts out of pattern. A few fixed rules pick what is urgent enough to send right away. The verdict is still the agent's.
 - **A place to ask.** A dashboard inside the agent, where you select whatever looks odd and ask about it.
 
@@ -73,7 +73,7 @@ An agent sees only what you paste into the chat. Activity Observer adds what it 
 
 | Activity Observer | Your agent | You |
 | --- | --- | --- |
-| **Records.** It keeps the log and flags what is urgent. It has no signature database, reaches no verdict and blocks nothing. | **Judges.** It investigates what stood out, runs its own read-only checks on the Mac and gives a verdict with the evidence. | **Decide.** You read the verdict, ask questions and choose what to do. The agent is told to change nothing without you. |
+| **Records.** It keeps the log and flags what is urgent. It has no signature database, reaches no verdict and blocks nothing. | **Judges.** It investigates what stood out, runs its own read-only checks on the Mac and gives a verdict with the evidence. Hard cases go to a more capable model. | **Decide.** You read the verdict, ask questions and choose what to do. The agent is told to change nothing without you. |
 
 Everything that needs judgment is left to the agent. That keeps the part you install small enough to read before you run it.
 
@@ -83,32 +83,35 @@ The pictures show the real widgets with made-up data, inside a redrawn Codex win
 
 ### A daily review in your chat
 
-Once a day the agent verifies the log, reads a digest of everything since the last review and investigates what stood out: who signed a program, who owns an address, what started a process. The report opens with a verdict, lists each lead with the evidence that settled it and says what to do. An inline widget shows the verdict and opens any program's timeline.
+Once a day the agent verifies the log, reads a digest of everything since the last review and investigates what stood out: who signed a program, who owns an address, what started a process. A lead it cannot close goes to a deep inspection by the most capable model before the report is written. The report opens with a verdict, lists each lead with the evidence that settled it and says what to do. An inline widget shows the verdict and opens any program's timeline.
 
 | Verdict | Meaning |
 | --- | --- |
 | **No threat found** | Every lead has an explanation that the agent confirmed with evidence. |
 | **Threat confirmed** | A lead is malicious. The report says what to stop, what to keep as evidence and what to treat as exposed. |
-| **Needs deeper inspection** | A lead could be malicious and the first checks did not settle it. The agent offers a deep inspection: a slower, wider investigation with the most capable model. |
+| **Needs deeper inspection** | Rare. A lead is still open after the deep inspection, or no stronger model could be started. The report names the open question and the one thing that would settle it. |
 
 <p align="center"><img src="docs/images/demo-daily-review.png" alt="A daily review that opens with a verdict, with the inline activity widget" width="100%"></p>
 
 ### Real-time alerts, investigated
 
-A detector checks new records every 30 seconds. When a program does something unusual, the incident is sent to your agent session. The agent investigates it the same way and answers first whether you have to act now. Most alerts end in no threat found, and the agent says so with the reason.
+A detector checks new records every 30 seconds. When a program does something unusual, the incident is sent to your agent session. The agent investigates it the same way and answers first whether you have to act now. When its own checks leave a question open, it starts a deep inspection on the most capable model and reports the result. Most alerts end in no threat found, and the agent says so with the reason.
 
-<p align="center"><img src="docs/images/demo-alert.png" alt="An alert investigated by the agent, ending in a verdict, with the dashboard in the side panel" width="100%"></p>
+<p align="center"><img src="docs/images/demo-alert.png" alt="An alert investigated by the agent and settled by a deep inspection on a stronger model, with the dashboard in the side panel" width="100%"></p>
 
 ### Skills that make the agent an analyst
 
-A capable model still needs to be told what the job is. Without that it summarizes the log and hands the question back to you. The plugin ships the method as skills:
+A model still needs to be told what the job is. Without that it summarizes the log and hands the question back to you. The plugin ships the method as skills, written in two levels.
+
+- **A routine review can run on a small, inexpensive model.** The skills give it a playbook for each kind of lead: the checks to run in order and the conditions that make the lead expected or malicious.
+- **A lead it cannot close goes to a stronger agent.** The reviewer starts a sub-agent on the most capable model and waits for its result. You are asked a question only when nothing on the Mac can answer it.
 
 | Skill | What it gives the agent |
 | --- | --- |
 | [`security-analyst`](plugin/skills/security-analyst/SKILL.md) | The method. Which activity is a lead, the read-only checks that settle it (signer, notarization, download source, parent process, owner of an address, autostart items), how attacks and common false alarms look in this record, the three verdicts and the report format. |
 | [`daily-review`](plugin/skills/daily-review/SKILL.md) | The daily run: verify the log, read the digest, investigate every lead, publish the verdict. |
 | [`incident-review`](plugin/skills/incident-review/SKILL.md) | An alert: a verdict for the incident and whether you have to act now. |
-| [`deep-inspection`](plugin/skills/deep-inspection/SKILL.md) | The second look at an open question, with the most capable model: the full timeline, the program's contents and provenance, a sweep for persistence, the exposure. |
+| [`deep-inspection`](plugin/skills/deep-inspection/SKILL.md) | The second level, started by the reviewer on the most capable model: the full timeline, the program's contents and provenance, a sweep for persistence, the exposure. |
 | [`setup`](plugin/skills/setup/SKILL.md) | Connects alerts to your chat and schedules the daily review. |
 
 The skills are plain Markdown. Read them, and change them to fit your Mac. A review is stored only when its verdict and its per-program findings agree.
@@ -180,7 +183,7 @@ To remove it: `./uninstall.sh` keeps the log and its key, `./uninstall.sh --purg
 
 | Recorded | Not recorded |
 | --- | --- |
-| Connections per program: remote address and port, protocol, bytes sent and received, the chain of parent programs | Packet contents, domain names, URLs |
+| Connections per program over sockets: remote address and port, protocol, bytes sent and received, the chain of parent programs | Packet contents, domain names, URLs. Connections made through Apple's own networking stack (see [Limits](#limits)) |
 | Keyboard event taps and HID device access | Keystrokes |
 | Screen capture, camera and microphone use | Screen images, audio, video |
 | Privacy permission decisions (which program, which permission, allowed or denied) | |
@@ -199,6 +202,7 @@ Read these before you treat a quiet day as a safe day. The complete list is in [
 - **A verdict is a judgment.** The agent can be wrong in both directions. "No threat found" covers what was recorded and what the agent checked. The analyst skills are new and have been through few real reviews.
 - **Real time is gated by fixed rules.** Only incidents that match a rule reach the agent within a minute. The agent sees everything else at the daily review. The rules are few and need to keep improving, and the repository includes a tool to replay them against your own log.
 - **Not everything is visible.** A process that never uses the network or a watched location, files read from inside a running interpreter, and small uploads to a familiar destination all go unseen. Process starts in the terminal are not recorded yet.
+- **Native apps' connections are missing.** Connections made through Apple's own networking stack (URLSession and Network.framework) are reported by macOS only to Apple-signed tools. That covers native apps, Safari, system services and many updaters. Chromium and Electron apps and tools such as curl, node, python and git are recorded.
 - **Root is the boundary.** The signing key lives on the same Mac. After a root compromise the log can no longer be trusted. The detector, the MCP server and the plugins run as your user, and malware running as your user can stop or mislead them.
 - **Your activity data reaches the model provider.** Whatever the agent reads to do a review is sent to OpenAI or Anthropic like the rest of the chat. The agent itself is a program that updates automatically.
 - **macOS only today.** Windows support is planned. The side-panel dashboard needs Codex. Claude Code gets the skills, the tools and the inline widgets.
@@ -215,7 +219,7 @@ Activity Observer differs in two ways. The whole loop, daily review, alert, dash
 
 Version 0.4.0. It runs daily on the author's Mac. The fresh-install path, Claude Code and other macOS versions have had far less testing than that one machine. [docs/KNOWN_LIMITS.md](docs/KNOWN_LIMITS.md) says exactly what was verified.
 
-Planned: Windows support, recording process starts, destination names next to addresses, and more detection rules shaped by replays of real logs.
+Planned: Windows support, recording process starts, connections made through Apple's networking stack, destination names next to addresses, and more detection rules shaped by replays of real logs.
 
 ## Maintenance
 

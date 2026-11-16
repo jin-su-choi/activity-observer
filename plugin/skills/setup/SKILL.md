@@ -46,9 +46,9 @@ Prompt for the scheduled run:
 
 A scheduled run only happens while the app is open and the Mac is awake. Say so.
 
-## 4. Ask about expected access
+## 4. Register expected access
 
-Some programs legitimately watch the keyboard or the screen: remote desktop tools, window managers, keyboard and mouse utilities, screen recorders. Ask the user which ones they use. With their confirmation, list them in the settings file so that an update of these programs does not raise an alert for access they are known to have:
+Some programs legitimately watch the keyboard or the screen: remote desktop tools, window managers, keyboard and mouse utilities, screen recorders. Find them yourself. Open the dashboard data or run a first digest (`observer review begin`) and look at which programs already hold keyboard, HID, screen or audio access. Identify each one by its signer and by what kind of tool it is, as the security-analyst skill describes. Propose the ones whose purpose needs that access, and with the user's agreement list them in the settings file, so that an update of these programs does not raise an alert for access they are known to have:
 
 `~/Library/Application Support/ActivityObserver UI/UI/settings.json`
 

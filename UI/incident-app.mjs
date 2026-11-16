@@ -1,5 +1,5 @@
 import { App, applyHostStyleVariables } from '@modelcontextprotocol/ext-apps';
-import { applyStaticText, i18n, t, useHostLocale } from './widget-i18n.mjs';
+import { applyStaticText, i18n, t, useHostLocale, useReviewZone } from './widget-i18n.mjs';
 
 const app = new App({ name: 'Activity Observer incident', version: '1.0.0' }, { availableDisplayModes: ['inline', 'fullscreen'] });
 const status = document.querySelector('#status');
@@ -36,6 +36,7 @@ function reasonTexts(view) {
 }
 
 function draw(view) {
+  useReviewZone(view.timeZone);
   const [title, ...others] = reasonTexts(view);
   const unknown = t('incident.unknown');
   document.querySelector('#title').textContent = title ?? t('incident.fallbackTitle');

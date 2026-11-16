@@ -112,7 +112,7 @@ function incident(day) {
     return { id: row.id, timestamp: row.first, kind: row.kind, app: row.app, path: row.path, pid: row.pid, remote: detail.remote, protocol: detail.protocol,
       ...(row.kind === 'network_bytes' && { sent: detail.tx_delta, appAggregate: false, executableAggregate: true }) };
   });
-  return { id: '7c1e09d2b4a8f36e5d0c9a17', revision: 1, severity: 2, createdAt: at(13, 44, 40), verified: true,
+  return { id: '7c1e09d2b4a8f36e5d0c9a17', revision: 1, severity: 2, createdAt: at(13, 44, 40), verified: true, timeZone,
     reasons: [text.reason('new_destination_send')], reasonCodes: ['new_destination_send'], evidence };
 }
 

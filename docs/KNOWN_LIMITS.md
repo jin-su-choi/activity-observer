@@ -12,6 +12,7 @@ A quiet log is not proof of a clean Mac. This page lists what Activity Observer 
 ## Not observed
 
 - Keystrokes, screen contents, audio, packet contents, URLs and domain names. Destinations are IP addresses and ports.
+- **Connections made through Apple's own networking stack.** URLSession and Network.framework run these connections in user space, and macOS reports them only to tools that carry a private Apple entitlement, such as `nettop`. The sensor has no such entitlement and sees socket connections only. Native apps, Safari, system services, many updaters and `nscurl` are therefore missing from the network record. Programs built on Chromium or Electron and tools such as curl, node, python and git are recorded. Found on macOS 27.0.1: a 118 MB `nscurl` download that `nettop` displayed left no record, and neither did a 264 MB download by a browser's updater. Whether the root-owned writer could observe these connections has not been tested.
 - File reads and writes in general. Only program files, autostart items and a short list of sensitive files are watched, and those by change, not by who changed them.
 - Process starts. A command run in a terminal is recorded only when it uses the network or a watched location, or when it is an app launch. For network connections the chain of parent programs is recorded at the time of the connection.
 - Activity inside a process. An interpreter or an app that reads your files and uploads them looks like that interpreter or app.
@@ -62,6 +63,7 @@ Verified there:
 Not verified:
 
 - A scheduled daily review, an alert review and a deep inspection run by an agent with the analyst skills in their current form. The skills were rewritten after the first reviews summarized the log and left the judgment to the user.
+- A reviewer on a small model starting a sub-agent on a stronger one for a deep inspection, in Codex or in Claude Code.
 - A first install on a Mac that never had Activity Observer, the complete `setup.sh` flow, and `uninstall.sh`.
 - Delivery of an alert into a Claude Code session, and the 0.4.0 widgets inside Claude.
 - Other macOS versions and Intel Macs.

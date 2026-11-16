@@ -429,6 +429,8 @@ function changeLanguage() {
 
 function applyHostContext(context) {
   if (typeof context.locale === 'string' && useHostLocale(context.locale)) changeLanguage();
+  // Until a view brings the Mac's own zone, "today" follows the host's.
+  if (!mounted && useReviewZone(context.timeZone)) { applyStaticText(root); period?.refresh(); }
   if (context.styles?.variables) applyHostStyleVariables(context.styles.variables);
   attachments?.receive(context);
   window.applyActivityObserverHostContext(context);

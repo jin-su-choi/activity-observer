@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="/scene.css">
 </head>
 <body data-scene="daily" data-view="chat" data-rail="home" data-title="Daily security review">
-<div class="window" style="--height: 1080px">
+<div class="window" style="--height: 1110px">
   <header class="toolbar"></header>
   <nav class="rail"></nav>
   <div class="panel chat-view">
@@ -23,11 +23,11 @@
           <p><strong>Verdict: Threat confirmed.</strong> Luma Launcher uploaded 41 MB to a server unrelated to its vendor, using a script it fetched from its update server. Everything else that stood out today has an explanation.</p>
           <table>
             <tr><th>What stood out</th><th>Finding</th><th>Evidence</th></tr>
-            <tr><td>Luma Launcher sent 41 MB to <code>203.0.113.77</code>, first contacted at 1:41 PM</td><td><strong>Malicious</strong></td><td>The address belongs to a hosting provider unrelated to the vendor. The launcher&rsquo;s cache holds a script fetched at 1:40 PM that reads browser profiles. The vendor never published it.</td></tr>
+            <tr><td>Luma Launcher sent 41 MB to <code>203.0.113.77</code>, first contacted at 1:41 PM</td><td><strong>Malicious</strong></td><td>Confirmed by the deep inspection at 1:49 PM: the address belongs to a hosting provider, and a script in the launcher&rsquo;s cache reads browser profiles and SSH keys. No release of the vendor contains it.</td></tr>
             <tr><td>Visual Studio Code replaced its files</td><td>Expected</td><td>Update from 1.96.0 to 1.96.1, same Microsoft signer, notarized.</td></tr>
             <tr><td>Zoom used the camera, microphone and screen</td><td>Expected</td><td>10:31 to 11:22 AM, matching your call.</td></tr>
           </table>
-          <p><strong>What to do:</strong> Keep Luma Launcher closed. From another device, change the passwords saved in your browser and sign out of its sessions. Say the word and I will remove the launcher&rsquo;s login item.</p>
+          <p><strong>What to do:</strong> Keep Luma Launcher closed. From another device, change the passwords saved in your browser and replace your SSH keys, if you have not yet. Say the word and I will remove the launcher&rsquo;s login item.</p>
           <p><strong>Coverage:</strong> All 511 records since the last review match the signed chain. Every sensor was active, with no gaps. File contents are not recorded, so what the 41 MB contained is unknown.</p>
         </div>
       </div></div>

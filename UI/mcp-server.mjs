@@ -221,7 +221,7 @@ export function createObserverServer(bundle, finderOptions, { state = createObse
     const incidentInput = z.object({ incidentId: z.string().regex(incidentIdPattern), revision: eventId.optional() }).strict();
     const incidentOutput = z.object({ id: z.string(), revision: eventId, severity: z.number(), createdAt: z.number(),
       reasons: z.array(z.string()), reasonCodes: z.array(z.string()).optional(), verified: z.boolean(), evidence: z.array(z.unknown()),
-      coverageGap: z.object({ after: eventId, through: eventId }).optional(),
+      coverageGap: z.object({ after: eventId, through: eventId }).optional(), timeZone: z.string().optional(),
       observedNotice: z.string().optional(), flagged: z.array(z.unknown()).optional() });
     registerAppResource(server, 'activity-incident', incidentUri, { description: s('resource.incident') }, async () => ({
       contents: [{ uri: incidentUri, mimeType: RESOURCE_MIME_TYPE, text: bundle.incidentHtml,
@@ -230,8 +230,9 @@ export function createObserverServer(bundle, finderOptions, { state = createObse
     const readIncident = async ({ incidentId, revision }) => {
       try {
         const view = readIncidentView(incidentId, revision);
+        // Times are shown in the Mac's zone, also when the chat is open on another device.
         return { content: [{ type: 'text', text: s('result.incident', { id: view.id, revision: view.revision }) }],
-          structuredContent: cleanedResult(view) };
+          structuredContent: { ...cleanedResult(view), timeZone: systemZone() } };
       } catch {
         return errorResult(fail('incident_unavailable'));
       }
