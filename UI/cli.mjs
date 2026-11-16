@@ -4,7 +4,8 @@ import { homedir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { collectReviewSnapshot, prepareViewData } from './build-widget.mjs';
-import { installedReviewDir, installedUiDir, reviewReportSchema } from './published-review.mjs';
+import { installedReviewDir, installedUiDir, reviewReportSchema, reviewVerdicts } from './published-review.mjs';
+import { reviewProblem } from './review-findings.mjs';
 import { readReviewPublication, reviewPublication, reviewPublicationHash, saveReviewPublication } from './review-history.mjs';
 import { buildReviewDigest } from './review-digest.mjs';
 import { readSettings, settingsPath } from './settings.mjs';
@@ -46,7 +47,6 @@ function reviewPublish() {
   // Inputs describe a completed review. The exact interval is verified again
   // against the signed log before anything is stored.
   const { anchor, after, previousHash, day, findings, report } = JSON.parse(readFileSync(0, 'utf8'));
-  const narrative = report === undefined ? undefined : reviewReportSchema.parse(report);
   const head = anchor?.payload;
   let publication = head && readReviewPublication(installedReviewDir, head.head_id, head.head_hash);
   if (publication) {
@@ -54,13 +54,19 @@ function reviewPublish() {
       throw Error('The requested interval differs from the published review');
     }
   } else {
+    // A review is stored only with a verdict that its findings support.
+    if (!reviewVerdicts.includes(report?.verdict)) throw Error('report.verdict is required: ' + reviewVerdicts.join(', '));
+    const narrative = reviewReportSchema.parse(report);
     const data = collectReviewSnapshot({ anchor, after, previousHash, day, reviewedOnly: true });
     const view = prepareViewData(data, findings);
-    if (narrative) view.report = narrative;
+    const problem = reviewProblem(narrative.verdict, data.source, findings, view.apps);
+    if (problem) throw Error(problem);
+    view.report = narrative;
     publication = saveReviewPublication(installedReviewDir, reviewPublication(view, previousHash), view.apps);
   }
   const { through, rowsRead, reviewedRows, outsideDayRows, dayRows } = publication.source;
-  print({ day, after, through, headHash: head.head_hash, publicationHash: reviewPublicationHash(publication), rowsRead, reviewedRows, outsideDayRows, dayRows,
+  print({ day, after, through, headHash: head.head_hash, publicationHash: reviewPublicationHash(publication),
+    ...(publication.report?.verdict && { verdict: publication.report.verdict }), rowsRead, reviewedRows, outsideDayRows, dayRows,
     applications: publication.applications.map(({ id, name, records, review }) => ({ id, name, records, review })) });
 }
 

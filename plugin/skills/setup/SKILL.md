@@ -65,8 +65,8 @@ Some programs legitimately watch the keyboard or the screen: remote desktop tool
 
 ## 5. Run the first review
 
-Run the daily-review skill once now. It records the starting point for later reviews.
+Run the daily-review skill once now. It records the starting point for later reviews and gives the user a first verdict.
 
 ## Finish
 
-Summarize in a few lines: collector version and health, which chat receives alerts, when the daily review runs, and what the first review found.
+Summarize in a few lines: collector version and health, which chat receives alerts, when the daily review runs, and the verdict of the first review.

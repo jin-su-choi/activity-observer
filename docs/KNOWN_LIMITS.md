@@ -5,7 +5,7 @@ A quiet log is not proof of a clean Mac. This page lists what Activity Observer 
 ## By design
 
 - **No prevention.** Nothing is blocked, quarantined or killed. An information stealer can collect and upload in minutes, before a person or an agent reacts. Activity Observer shortens the time until you know and preserves what happened.
-- **The agent judges, and agents err.** A review can miss something or raise a false concern. Treat a report as a colleague's reading of the evidence, and open the records when it matters.
+- **The agent judges, and agents err.** A review can miss something or raise a false concern. A verdict of no threat found covers what was recorded and what the agent checked. Treat a report as a colleague's reading of the evidence, and open the records when it matters.
 - **Rules gate real time.** Only incidents that match a rule in [DETECTION.md](DETECTION.md) reach the agent quickly. Everything else waits for the daily review. The rules are few and need continual improvement.
 - **Reviews depend on the host being open.** A scheduled review runs only while the agent's app is open and the Mac is awake. An alert waits in a queue until the agent session can take it.
 
@@ -51,8 +51,9 @@ Verified there:
 - An update install from 0.3.3 to 0.4.0, the pinned hashes of every installed file, and a signed status that reports each sensor as active.
 - Verification of the whole retained log: 408,289 records in 26 seconds.
 - The record kinds added in 0.4.0 appearing in the production log: permission decisions, merged connection records, parent program chains.
-- `observer doctor`, `observer review begin` over 173,363 records (18.5 seconds, 145 MB at peak) and `observer review publish` in a temporary home directory.
-- Codex: plugin registration and the three skills appearing in a session. The widgets were rendered from the 0.4.0 build in a local MCP Apps host.
+- `observer doctor`, `observer review begin` over 173,363 records (18.5 seconds, 145 MB at peak) and `observer review publish` in a temporary home directory, including its refusal to store a review without a verdict, with findings for unknown programs, or with a verdict that its findings contradict.
+- Codex: plugin registration and the five skills installed in the plugin cache. The widgets, including the verdict and the threat state, were rendered from the build in a local MCP Apps host.
+- One investigation done by hand with the method of the security-analyst skill: a 2.25 GB upload that a review had left open was traced to the user's own model proxy through the package, its signer, the listening process and the owner of the address.
 - Claude Code: plugin validation, then marketplace add, install and a connected MCP server in a clean configuration directory.
 - One real-time alert from the new rules in production: a `sensitive_file_changed` incident was queued about 40 seconds after the change.
 - A replay of the rules over three days of real records (396,687 records), which raised 6 incidents.
@@ -60,6 +61,7 @@ Verified there:
 
 Not verified:
 
+- A scheduled daily review, an alert review and a deep inspection run by an agent with the analyst skills in their current form. The skills were rewritten after the first reviews summarized the log and left the judgment to the user.
 - A first install on a Mac that never had Activity Observer, the complete `setup.sh` flow, and `uninstall.sh`.
 - Delivery of an alert into a Claude Code session, and the 0.4.0 widgets inside Claude.
 - Other macOS versions and Intel Macs.

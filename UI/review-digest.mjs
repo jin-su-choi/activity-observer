@@ -17,6 +17,12 @@ const changeKinds = new Set(['program_installed', 'program_first_seen', 'program
 const programLimit = 40;
 const parse = text => { try { return JSON.parse(text) ?? {}; } catch { return {}; } };
 const push = (list, item, limit) => { if (list.length < limit) list.push(item); return list.length <= limit; };
+// How many events a gap row says were lost. A gap without a number only asks for a rescan.
+function lostEvents(row, detail) {
+  const lost = row.kind === 'sensor_transport_gap' ? Number(detail.received_sequence) - Number(detail.expected_sequence)
+    : Number(detail.queue_dropped ?? detail.ingress_dropped ?? 0);
+  return lost > 0 ? lost * (row.count ?? 1) : 0;
+}
 
 export function buildReviewDigest(start) {
   const interval = openReviewInterval(start);
@@ -24,8 +30,8 @@ export function buildReviewDigest(start) {
   const clock = zoneClock();
   const stamp = seconds => new Date(seconds * 1000).toLocaleString('sv-SE', { timeZone: clock.timeZone });
   const programs = new Map(), days = {};
-  const gaps = [], sensitiveFiles = [], autostart = [];
-  let rejections = 0, sensorRestarts = 0, reconciled = 0;
+  const gaps = [], rescans = [], sensitiveFiles = [], autostart = [];
+  let rejections = 0, sensorRestarts = 0, reconciled = 0, gapCount = 0, lostInGaps = 0;
   // Rows arrive in ID order, so the first one marks when the interval began.
   let began = null;
   let history = null;
@@ -35,9 +41,14 @@ export function buildReviewDigest(start) {
     began ??= row.first;
     days[row.day] = (days[row.day] ?? 0) + 1;
     const detail = parse(row.detail);
-    if (row.kind === 'collection_gap' || row.kind === 'sensor_transport_gap') push(gaps, { at: stamp(row.last), source: row.source, reason: String(detail.reason ?? row.kind).slice(0, 160) }, 12);
-    else if (row.kind === 'filesystem_inventory_reconciled') { if (detail.status === 'completed') reconciled++; }
-    else if (row.kind === 'guard_connection_rejected') rejections += row.count;
+    if (row.kind === 'collection_gap' || row.kind === 'sensor_transport_gap') {
+      const lost = lostEvents(row, detail);
+      gapCount++; lostInGaps += lost;
+      push(gaps, { at: stamp(row.last), source: row.source, reason: String(detail.reason ?? row.kind).slice(0, 160), lost }, 20);
+    } else if (row.kind === 'filesystem_inventory_reconciled') {
+      if (detail.status === 'completed') reconciled++;
+      push(rescans, { at: stamp(row.last), status: detail.status === 'completed' ? 'completed' : 'partial', pathsRechecked: Number(detail.known_paths_rechecked) || 0 }, 20);
+    } else if (row.kind === 'guard_connection_rejected') rejections += row.count;
     else if (row.kind === 'sensor_connected') sensorRestarts += row.count;
     if (row.kind === 'sensitive_file_changed') {
       push(sensitiveFiles, { at: stamp(row.last), path: row.path, category: detail.category, scope: detail.current?.scope, exists: detail.current?.exists }, 20);
@@ -63,9 +74,10 @@ export function buildReviewDigest(start) {
       const signerChanged = Boolean(before.team_id && before.team_id !== current.team_id);
       if (signerChanged) program.flags.add('signer_changed');
       if (row.kind !== 'program_removed' && !current.team_id && !current.signing_identifier && row.kind !== 'program_files_changed') program.flags.add('unsigned_program_change');
-      if (autostartPath(row.path) && !ownAutostart(row.path) && row.kind !== 'program_removed') {
-        program.flags.add('autostart_item_changed');
-        push(autostart, { at: stamp(row.last), kind: row.kind, path: row.path }, 20);
+      // Removals are listed too: clearing out security tools is a way to blind a machine.
+      if (autostartPath(row.path) && !ownAutostart(row.path)) {
+        program.flags.add(row.kind === 'program_removed' ? 'autostart_item_removed' : 'autostart_item_changed');
+        push(autostart, { at: stamp(row.last), kind: row.kind, path: row.path }, 40);
       }
       // Repeated changes to one path are listed once with their number.
       const repeated = program.changes.find(item => item.kind === row.kind && item.path === row.path && item.version === current.version);
@@ -120,8 +132,9 @@ export function buildReviewDigest(start) {
     const destinations = [...program.network.destinations.values()];
     const firstContacts = destinations.filter(item => item.firstContact && item.sent >= 256 * 1024);
     if (firstContacts.length) program.flags.add('large_send_to_first_contacted_address');
-    const notable = program.flags.size || program.changeCount || Object.keys(program.access).length || program.permissions.size;
-    return { notable: Boolean(notable), summary: {
+    // Flagged programs come first, then the ones that changed or used sensitive access.
+    const notable = program.flags.size ? 2 : program.changeCount || Object.keys(program.access).length || program.permissions.size ? 1 : 0;
+    return { notable, summary: {
       id: program.id, programKey: createHash('sha256').update(program.id).digest('hex'), name: program.name, type: program.type, records: program.records,
       first: stamp(program.first), last: stamp(program.last),
       ...(program.flags.size && { flags: [...program.flags] }),
@@ -137,7 +150,7 @@ export function buildReviewDigest(start) {
         ...(program.network.chains.size && { launchedBy: top(program.network.chains, 3).map(([chain, opens]) => ({ chain, opens })) })
       } })
     } };
-  }).sort((a, b) => Number(b.notable) - Number(a.notable) || b.summary.records - a.summary.records);
+  }).sort((a, b) => b.notable - a.notable || b.summary.records - a.summary.records);
   const shown = summaries.slice(0, programLimit).map(item => item.summary), rest = summaries.slice(programLimit);
 
   const incidents = Object.values(history?.incidents ?? {}).filter(item => item.updatedAt >= (began ?? 0))
@@ -146,7 +159,8 @@ export function buildReviewDigest(start) {
   const sensors = Object.entries(status.sensors ?? {}).filter(([name, value]) => value?.status && value.status !== 'active' && name !== 'endpoint_security')
     .map(([name, value]) => ({ name, status: value.status, detail: String(value.detail ?? '').slice(0, 200) }));
   const { value: observed, flagged } = guardObserved({ programs: shown,
-    ...(rest.length && { otherPrograms: { count: rest.length, records: rest.reduce((sum, item) => sum + item.summary.records, 0) } }),
+    ...(rest.length && { otherPrograms: { count: rest.length, records: rest.reduce((sum, item) => sum + item.summary.records, 0),
+      flagged: rest.filter(item => item.notable === 2).length } }),
     sensitiveFiles, autostart });
   const day = clock.day(anchor.payload.created_at);
   return {
@@ -158,7 +172,7 @@ export function buildReviewDigest(start) {
       sensorsNotActive: sensors, droppedEvents: status.dropped_events, sensorDropped: status.sensors?.guard_sensor_metrics?.dropped,
       prunedRows: status.pruned_rows, prunedStatisticsRows: status.pruned_statistics_rows, boundaryId: status.boundary_id,
       dataBytes: status.data_bytes, maxDataBytes: status.max_data_bytes,
-      gaps, gapCount: gaps.length, reconciledRescans: reconciled, rejectedConnections: rejections, sensorConnections: sensorRestarts },
+      gaps, gapCount, lostInGaps, rescans, reconciledRescans: reconciled, rejectedConnections: rejections, sensorConnections: sensorRestarts },
     detector: history ? { lastScan: history.lastScan ? stamp(history.lastScan) : null, deliveryIssue: history.deliveryIssue ?? null, incidents } : null,
     observed, ...(flagged.length && { flagged })
   };

@@ -41,7 +41,8 @@ writeFileSync(resolve(plugin, 'README.md'), [
   '# Activity Observer', '',
   'Turns your agent into the security reviewer of this Mac. The plugin connects Claude Code to the local Activity Observer',
   'server, which serves a signed log of what programs did: network connections, input and screen access, installs,',
-  'autostart items and changes to sensitive files. It adds three skills: setup, daily-review and incident-review.', '',
+  'autostart items and changes to sensitive files. Its skills teach the agent to work as a security analyst:',
+  'setup, security-analyst, daily-review, incident-review and deep-inspection. Every review ends in a verdict.', '',
   'The collector has to be installed first with setup.sh from the repository. Then say: Set up Activity Observer.', ''
 ].join('\n'), { mode: 0o600 });
 cpSync(resolve(ui, 'skills'), resolve(plugin, 'skills'), { recursive: true });

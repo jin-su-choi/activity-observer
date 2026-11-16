@@ -3,7 +3,7 @@
     html[data-activity-observer-canvas="flush"] { --oi-bg:var(--color-background-primary,light-dark(#fcfcfd,#151518));background:var(--oi-bg);color-scheme:light dark; }
     html[data-activity-observer-canvas="flush"],html[data-activity-observer-canvas="flush"] > body { margin:0!important;padding:0!important; }
     html[data-activity-observer-viewport="fullscreen"],html[data-activity-observer-viewport="fullscreen"] body { margin:0;padding:0;height:auto;min-height:0;overflow:hidden; }
-    #security-activity { --oi-side:var(--color-background-secondary,light-dark(#f5f5f7,#111114));--oi-fg:var(--color-text-primary,light-dark(#222228,#ececf0));--oi-muted:var(--color-text-secondary,light-dark(#60606b,#aaaab6));--oi-line:var(--color-border-primary,light-dark(#e7e7ed,#2a2a30));--oi-hover:light-dark(#ededf2,#222228);--oi-accent:light-dark(#5b4cac,#b2a8ef);--oi-selected:light-dark(#eae6f9,#302a44);--oi-green:light-dark(#31785c,#84b49a);--oi-amber:light-dark(#9d681f,#d6ac6a);--oi-tint:light-dark(#f1eff8,#24212f);font:13px/1.5 system-ui,sans-serif;color:var(--oi-fg);width:100%;height:760px; }
+    #security-activity { --oi-side:var(--color-background-secondary,light-dark(#f5f5f7,#111114));--oi-fg:var(--color-text-primary,light-dark(#222228,#ececf0));--oi-muted:var(--color-text-secondary,light-dark(#60606b,#aaaab6));--oi-line:var(--color-border-primary,light-dark(#e7e7ed,#2a2a30));--oi-hover:light-dark(#ededf2,#222228);--oi-accent:light-dark(#5b4cac,#b2a8ef);--oi-selected:light-dark(#eae6f9,#302a44);--oi-green:light-dark(#31785c,#84b49a);--oi-amber:light-dark(#9d681f,#d6ac6a);--oi-red:light-dark(#b23a30,#e2877b);--oi-tint:light-dark(#f1eff8,#24212f);font:13px/1.5 system-ui,sans-serif;color:var(--oi-fg);width:100%;height:760px; }
     #security-activity { min-height:0;max-height:760px;overflow:hidden;contain:layout size; }
     #security-activity * { box-sizing:border-box; }
     #security-activity button,#security-activity select { font:inherit;color:inherit; }
@@ -14,6 +14,11 @@
     #security-activity[data-compact=true] .oi-shell { display:none; }
     #security-activity .oi-summary-head { display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;min-height:28px;margin-bottom:11px; }
     #security-activity .oi-summary-head h2 { margin:0;font-size:14px;line-height:20px;letter-spacing:-.15px; }
+    #security-activity .oi-summary-title { display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0; }
+    #security-activity .oi-verdict { display:inline-flex;align-items:center;gap:5px;font-size:12px;line-height:18px;font-weight:600;white-space:nowrap;color:var(--oi-green); }
+    #security-activity .oi-verdict svg { width:14px;height:14px;stroke-width:2; }
+    #security-activity .oi-verdict[data-verdict=threat] { color:var(--oi-red); }
+    #security-activity .oi-verdict[data-verdict=inconclusive] { color:var(--oi-amber); }
     #security-activity .oi-summary-meta { display:inline-flex;align-items:center;gap:10px;min-height:24px;color:var(--oi-muted);font-size:12px;line-height:16px; }
     #security-activity #oi-card-date { display:inline-flex;align-items:center;min-height:24px;font-variant-numeric:tabular-nums; }
     #security-activity .oi-summary p { margin:0;color:var(--oi-muted); }
@@ -27,6 +32,7 @@
     #security-activity .oi-card h3 { flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;line-height:18px; }
     #security-activity .oi-card-state { font-size:11px;color:var(--oi-green);white-space:nowrap; }
     #security-activity .oi-card-state[data-status=attention] { color:var(--oi-amber); }
+    #security-activity .oi-card-state[data-status=threat] { color:var(--oi-red);font-weight:600; }
     #security-activity .oi-card-metrics { margin:0;display:grid;gap:5px; }
     #security-activity .oi-card-metrics div { display:flex;align-items:baseline;justify-content:space-between;gap:7px;font-size:12px; }
     #security-activity .oi-card-metrics dt { color:var(--oi-muted); }
@@ -96,6 +102,7 @@
     #security-activity .oi-badge { display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;flex-shrink:0;color:var(--oi-green); }
     #security-activity .oi-badge svg { width:13px;height:13px;stroke-width:1.9; }
     #security-activity .oi-badge[data-status=attention] { color:var(--oi-amber); }
+    #security-activity .oi-badge[data-status=threat] { color:var(--oi-red); }
     #security-activity .oi-nav-note { flex-shrink:0;margin:12px 10px 0;padding-top:12px;border-top:1px solid var(--oi-line);font-size:11px;color:var(--oi-muted); }
     #security-activity .oi-badge-key { display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:7px; }
     #security-activity .oi-main { height:100%;max-height:100%;overflow:hidden;display:flex;flex-direction:column;min-width:0;min-height:0; }
@@ -216,6 +223,7 @@
     #security-activity .oi-report header { display:flex;justify-content:space-between;align-items:center;gap:12px; }
     #security-activity .oi-report h2,#security-activity .oi-report h3 { margin:0;font-size:inherit;font-weight:600; }
     #security-activity .oi-report p { white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 14px; }
+    #security-activity .oi-report .oi-verdict { margin-top:14px;font-size:14px;line-height:20px; }
     #security-activity .oi-mobile-select { display:none; }
     #security-activity .oi-sr { position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap; }
     #security-activity [hidden] { display:none!important; }
@@ -252,7 +260,7 @@
   </style>
   <section class="oi-summary" aria-labelledby="oi-summary-title">
     <header class="oi-summary-head">
-      <h2 id="oi-summary-title" tabindex="-1" data-i18n="summary.title"></h2>
+      <div class="oi-summary-title"><h2 id="oi-summary-title" tabindex="-1" data-i18n="summary.title"></h2><span class="oi-verdict" id="oi-card-verdict" hidden></span></div>
       <div class="oi-summary-meta"><time id="oi-card-date"></time><div class="oi-card-nav" id="oi-card-nav" hidden>
         <button type="button" id="oi-cards-prev" data-i18n-label="cards.previous"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
         <button type="button" id="oi-cards-next" data-i18n-label="cards.next"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
@@ -281,6 +289,7 @@
           </button>
           <button type="button" id="oi-today" data-i18n="period.today"></button>
         </div>
+        <span class="oi-verdict" id="oi-verdict" hidden></span>
         <button type="button" id="oi-report-toggle" class="oi-report-toggle" aria-haspopup="dialog" hidden data-i18n="report.title"></button>
         <span id="oi-review-date"></span><span class="oi-check" id="oi-integrity" hidden><span class="oi-check-dot"></span><span data-i18n="integrity.verified"></span></span>
       </div>
@@ -290,7 +299,7 @@
         <div class="oi-nav-head"><span data-i18n="nav.heading"></span><span id="oi-app-total"></span></div>
         <div class="oi-list-placeholder" aria-hidden="true"><span class="oi-placeholder-block"></span><span class="oi-placeholder-block"></span><span class="oi-placeholder-block"></span><span class="oi-placeholder-block"></span><span class="oi-placeholder-block"></span></div>
         <nav class="oi-nav-scroll" data-i18n-label="nav.list"><div id="oi-apps"></div></nav>
-        <div class="oi-nav-note"><div class="oi-badge-key" id="oi-badge-key"><span class="oi-badge"><i data-lucide="circle-check" aria-hidden="true"></i></span><span data-i18n="status.normal"></span><span class="oi-badge" data-status="attention"><i data-lucide="circle-alert" aria-hidden="true"></i></span><span data-i18n="status.attention"></span></div><span id="oi-total-rows"></span><span id="oi-badge-caption"><br><span data-i18n="nav.badgeCaption"></span></span></div>
+        <div class="oi-nav-note"><div class="oi-badge-key" id="oi-badge-key"><span class="oi-badge"><i data-lucide="circle-check" aria-hidden="true"></i></span><span data-i18n="status.normal"></span><span class="oi-badge" data-status="attention"><i data-lucide="circle-alert" aria-hidden="true"></i></span><span data-i18n="status.attention"></span><span class="oi-badge oi-threat-key" data-status="threat" hidden><i data-lucide="octagon-alert" aria-hidden="true"></i></span><span class="oi-threat-key" data-i18n="status.threat" hidden></span></div><span id="oi-total-rows"></span><span id="oi-badge-caption"><br><span data-i18n="nav.badgeCaption"></span></span></div>
       </aside>
       <main class="oi-main" tabindex="-1">
         <div class="oi-main-placeholder" id="oi-main-placeholder" aria-hidden="true">
@@ -365,6 +374,7 @@
   </div>
   <dialog id="oi-report" class="oi-report" aria-labelledby="oi-report-title">
     <header><h2 id="oi-report-title" data-i18n="report.title"></h2><button type="button" id="oi-report-close" class="oi-report-close" data-i18n="report.close"></button></header>
+    <div class="oi-verdict" id="oi-report-verdict" hidden></div>
     <p id="oi-report-conclusion"></p>
     <h3 data-i18n="report.activity"></h3><p id="oi-report-activity"></p>
     <h3 data-i18n="report.collection"></h3><p id="oi-report-collection"></p>
@@ -421,6 +431,18 @@
     fitHeight();
     return applyHostContext;
   })();
+  // Shows the verdict of a review. Reports published before verdicts existed show none.
+  window.showActivityObserverVerdict = (node, verdict, label) => {
+    const icons = { clear: 'shield-check', threat: 'shield-alert', inconclusive: 'scan-search' };
+    node.hidden = !Object.hasOwn(icons, verdict ?? '');
+    if (node.hidden) return;
+    const glyph = document.createElement('i'), text = document.createElement('span');
+    glyph.setAttribute('data-lucide', icons[verdict]);
+    glyph.setAttribute('aria-hidden', 'true');
+    text.textContent = label;
+    node.dataset.verdict = verdict;
+    node.replaceChildren(glyph, text);
+  };
   window.mountActivityObserver = (data, host) => {
     __CHART_CONFIG_CODE__
     __TIMELINE_CODE__
@@ -439,7 +461,10 @@
     const report = q('oi-report-toggle');
     if (host.context) applyHostContext(host.context);
     report.hidden = !data.report;
+    const verdict = data.report?.verdict, verdictLabel = verdict && host.i18n.t('verdict.' + verdict);
+    window.showActivityObserverVerdict(q('oi-verdict'), verdict, verdictLabel);
     if (data.report) {
+      window.showActivityObserverVerdict(q('oi-report-verdict'), verdict, verdictLabel);
       for (const key of ['conclusion', 'activity', 'collection', 'integrity']) q('oi-report-'+key).textContent=data.report[key];
       const dialog=q('oi-report');
       listen(report,'click',()=>dialog.showModal());
@@ -470,7 +495,8 @@
     let tab = host.selection?.tab ?? 'all', chart = null, connected = false, chartFactory = null, chartError = false, renderedId = null;
     const contexts = Object.fromEntries(['inventory','system','observer','unresolved','files'].map(id => [id, tr('context.' + id)]));
     const glyph = a => /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(a.iconData||'') ? `<img src="${a.iconData}" alt="" width="64" height="64">` : `<i data-lucide="${escape(a.icon)}" aria-hidden="true"></i>`;
-    const badge = a => a.review ? `<span class="oi-badge" data-status="${a.review.status==='normal'?'normal':'attention'}" role="img" aria-label="${escape(a.review.label)}" data-tooltip="${escape(a.review.label+' · '+a.review.reason)}"><i data-lucide="${a.review.status==='normal'?'circle-check':'circle-alert'}" aria-hidden="true"></i></span>` : '';
+    const badgeIcons = {normal:'circle-check',attention:'circle-alert',threat:'octagon-alert'};
+    const badge = a => { if (!a.review) return ''; const status = Object.hasOwn(badgeIcons,a.review.status)?a.review.status:'attention'; return `<span class="oi-badge" data-status="${status}" role="img" aria-label="${escape(a.review.label)}" data-tooltip="${escape(a.review.label+' · '+a.review.reason)}"><i data-lucide="${badgeIcons[status]}" aria-hidden="true"></i></span>`; };
     const button = a => `<button class="oi-app cursor-interaction" type="button" data-app="${escape(a.id)}" aria-label="${escape(tr('app.buttonLabel',{name:a.name,records:a.records,status:a.review?.label}))}" aria-pressed="false"><span class="oi-glyph">${glyph(a)}</span><span class="oi-app-name" data-tooltip="${escape(a.name)}">${escape(a.name)}</span><span class="oi-app-count">${compact(a.records)}</span>${badge(a)}</button>`;
     q('oi-apps').innerHTML=programs.map(button).join('');
     q('oi-app-total').textContent=tr('nav.groups',{count:data.applicationCount ?? catalog.length});
@@ -479,6 +505,7 @@
     q('oi-review-date').hidden=dashboard;
     q('oi-review-date').textContent=i18n.day(data.source.day);
     q('oi-badge-key').hidden=q('oi-badge-caption').hidden=Boolean(period);
+    for (const key of root.querySelectorAll('.oi-threat-key')) key.hidden=!catalog.some(a=>a.review?.status==='threat');
     q('oi-view-kind').textContent=tr(period?'view.period':'view.daily');
     q('oi-total-rows').textContent=tr('source.rows',{outside:Boolean(data.source.outsideDayRows),count:data.source.rowsRead});
     if(data.source.outsideDayRows)q('oi-total-rows').setAttribute('data-tooltip',tr('source.rowsTooltip',{reviewed:data.source.reviewedRows,outside:data.source.outsideDayRows}));

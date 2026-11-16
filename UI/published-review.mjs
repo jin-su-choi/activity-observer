@@ -5,7 +5,11 @@ import { z } from 'zod';
 
 export const digest = text => createHash('sha256').update(text).digest('hex');
 export { installedUiDir, installedReviewDir } from './paths.mjs';
+// Every review ends with one verdict. Reports published before verdicts
+// existed have none.
+export const reviewVerdicts = ['clear', 'threat', 'inconclusive'];
 export const reviewReportSchema = z.object({
+  verdict: z.enum(reviewVerdicts).optional(),
   conclusion: z.string().trim().min(1).max(500),
   activity: z.string().trim().min(1).max(3000),
   collection: z.string().trim().min(1).max(1500),

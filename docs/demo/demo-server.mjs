@@ -87,20 +87,21 @@ const chunked = (data, offset, size, extra = {}) => {
 const megabytes = bytes => Math.round(bytes / 1e6);
 const uploaded = megabytes(launcher.uploads.reduce((sum, upload) => sum + upload[3], 0));
 const reviewed = id => id === launcher.id
-  ? { status: 'attention', label: 'Needs review', reason: 'Sent ' + uploaded + ' MB to an address it first contacted at 13:41. Its files and signer did not change.' }
-  : { status: 'normal', label: 'Normal', reason: 'Activity matches earlier days.' };
+  ? { status: 'threat', label: 'Threat', reason: 'Uploaded ' + uploaded + ' MB to a server unrelated to its vendor, using a script it fetched at 13:40.' }
+  : { status: 'normal', label: 'Normal', reason: 'Nothing new, changed or out of pattern.' };
 
 function review(day) {
   const { view } = dayView(day, 'daily');
   const source = { ...view.source, integrity: 'verified', reviewedRows: view.source.rowsRead, outsideDayRows: 0 };
   const applications = view.apps.map(app => reviewApplication({ ...app, review: reviewed(app.id) }));
   const report = {
-    conclusion: 'One program needs your attention: Luma Launcher sent ' + uploaded + ' MB to an address it had never contacted.',
-    activity: 'Visual Studio Code updated from 1.96.0 to 1.96.1 with the same signer. Zoom used the camera, microphone and screen from 10:31 to 11:22. Magnet holds its usual keyboard tap.',
+    verdict: 'threat',
+    conclusion: 'Luma Launcher uploaded ' + uploaded + ' MB to a server unrelated to its vendor, using a script it fetched from its update server.',
+    activity: 'Luma Launcher: malicious. The address belongs to a hosting provider and the cached script reads browser profiles. Visual Studio Code: expected, an update from 1.96.0 to 1.96.1 with the same signer. Zoom: expected, camera, microphone and screen from 10:31 to 11:22.',
     collection: 'All sensors were active. No gaps. 148 MB of the 1 GB limit is in use.',
     integrity: 'Every record since the last review matches the signed chain.'
   };
-  const summary = { ...reviewCardSummary(source, applications), publicationHash: 'b'.repeat(64) };
+  const summary = { ...reviewCardSummary(source, applications), publicationHash: 'b'.repeat(64), verdict: report.verdict };
   return { source, applications, report, summary };
 }
 

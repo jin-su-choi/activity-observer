@@ -2,7 +2,7 @@
 
 Two things look at the log.
 
-- **The daily review** is done by the agent. It reads a digest of every record since the last review and judges it with whatever it knows. Nothing is filtered out beforehand.
+- **The daily review** is done by the agent. It reads a digest of every record since the last review, investigates what stood out with the [analyst skills](../plugin/skills/security-analyst/SKILL.md) and ends with a verdict. Nothing is filtered out beforehand.
 - **Real-time detection** is done by fixed rules. A detector reads new records every 30 seconds, and only what matches a rule is sent to the agent as an incident. The agent then investigates and judges.
 
 The rules exist to decide what is worth interrupting the agent for within a minute or two. They are deliberately broad about unusual behavior and leave the verdict to the agent. They are also few, and they will miss things. Improving them is ongoing work, and this page explains how to measure a change.

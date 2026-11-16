@@ -114,6 +114,10 @@ const ko = {
   'nav.badgeCaption': '완료 검토 구간의 판단',
   'status.normal': '정상',
   'status.attention': '확인 필요',
+  'status.threat': '위협',
+  'verdict.clear': '위협 없음',
+  'verdict.threat': '위협 확인',
+  'verdict.inconclusive': '심층 검사 필요',
   'view.breadcrumb': '프로그램 활동 / 상세',
   'view.daily': (p, f) => '일일 검토 · ' + f.zone,
   'view.period': (p, f) => '기간 조회 · ' + f.zone,
@@ -459,6 +463,10 @@ const en = {
   'nav.badgeCaption': 'Assessment of the completed review range',
   'status.normal': 'Normal',
   'status.attention': 'Needs review',
+  'status.threat': 'Threat',
+  'verdict.clear': 'No threat found',
+  'verdict.threat': 'Threat confirmed',
+  'verdict.inconclusive': 'Needs deeper inspection',
   'view.breadcrumb': 'Program activity / Details',
   'view.daily': (p, f) => 'Daily review · ' + f.zone,
   'view.period': (p, f) => 'Date range · ' + f.zone,
@@ -829,7 +837,7 @@ export function createI18n(requested, timeZone) {
 
 export function localizeReview(review, i18n) {
   if (!review) return review;
-  const label = ['normal', 'attention'].includes(review.status) ? i18n.t('status.' + review.status) : review.label;
+  const label = ['normal', 'attention', 'threat'].includes(review.status) ? i18n.t('status.' + review.status) : review.label;
   return { ...review, label, reason: i18n.token('reviewReason', review.reason) };
 }
 

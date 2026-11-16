@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { setImmediate as yieldToServer } from 'node:timers/promises';
 import { createFinderRevealer } from './finder.mjs';
-import { digest, installedReviewDir, readPublishedReview, reviewReportSchema } from './published-review.mjs';
+import { digest, installedReviewDir, readPublishedReview, reviewReportSchema, reviewVerdicts } from './published-review.mjs';
 import { readReviewIcons, readReviewPublication, reviewApplication, reviewCardSummary, reviewProgramDigest, reviewDetailWithoutReferences, reviewPublicationHash } from './review-history.mjs';
 import { activityPeriodBounds, activityPeriodRetained, assertPublishedRetained, beginActivityReview, checkMcpIsolation, createActivityPeriodSummary, installedMcpBuild,
   openActivityPeriod, readActivityCatalog, readCatalogProgram, readActivityPage, readActivityPeriodPage, readActivitySelection, readPublishedPrograms } from './build-widget.mjs';
@@ -188,6 +188,7 @@ export function createObserverServer(bundle, finderOptions, { state = createObse
     const summary = reviewCardSummary(entry.source, entry.applications);
     if (entry.publication?.cards) summary.applications = entry.publication.cards;
     if (entry.publicationHash) summary.publicationHash = entry.publicationHash;
+    if (entry.report?.verdict) summary.verdict = entry.report.verdict;
     return summary;
   };
   const unavailable = () => errorResult(fail('view_unavailable'));
@@ -254,7 +255,7 @@ export function createObserverServer(bundle, finderOptions, { state = createObse
     inputSchema: z.object({ ...reviewReferenceFields, throughId: eventId.optional(), expectedHeadHash: sha256.optional() }).strict(),
     outputSchema: z.object({ day: z.string(), after: z.number(), through: z.number(), headHash: z.string(), records: z.number(),
       reviewedRecords: z.number(), outsideDayRecords: z.number(), dayRecords: z.record(z.string(), z.number()),
-      applicationCount: z.number(), report: reviewReportSchema.optional(), applications: z.array(z.unknown()), publicationHash: sha256.optional(),
+      applicationCount: z.number(), verdict: z.enum(reviewVerdicts).optional(), report: reviewReportSchema.optional(), applications: z.array(z.unknown()), publicationHash: sha256.optional(),
       observedNotice: z.string().optional(), flagged: z.array(z.unknown()).optional() }),
     annotations: readOnly,
     _meta: { ui: { resourceUri: uri, visibility: ['model', 'app'] } }
@@ -263,7 +264,8 @@ export function createObserverServer(bundle, finderOptions, { state = createObse
       const entry = await getView(throughId, expectedHeadHash, expectedPublicationHash);
       const summary = cardSummary(entry);
       const reference = `${text.referenceLabel} ${summary.through}/${summary.headHash}` + (summary.publicationHash ? `/${summary.publicationHash}` : '');
-      const shown = s('result.review', { day: summary.day, records: summary.records, reviewed: summary.reviewedRecords, through: summary.through });
+      const shown = (summary.verdict ? s('result.verdict', { verdict: summary.verdict }) + ' ' : '') +
+        s('result.review', { day: summary.day, records: summary.records, reviewed: summary.reviewedRecords, through: summary.through });
       return { content: [{ type: 'text', text: shown + '\n' + reference }],
         structuredContent: { ...cleanedResult(forModel(summary, localizeCardSummary)), ...(entry.report && { report: entry.report }) } };
     } catch (error) { return errorResult(error); }

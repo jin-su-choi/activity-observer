@@ -1,7 +1,7 @@
 import { App, applyHostStyleVariables } from '@modelcontextprotocol/ext-apps';
 import { createIcons, Archive, AppWindow, Asterisk, AudioLines, Braces, CalendarDays, ChartNoAxesColumn, Check, ChevronRight, CircleAlert, CircleCheck, CircleHelp,
   Component, FileQuestion, FlaskConical, FolderSync, GitBranch, GitPullRequest, Globe, Hexagon, Inbox, KeyRound,
-  Monitor, MonitorUp, Notebook, Package, PanelsTopLeft, Plus, ScanSearch, Shield, ShieldCheck, SquareTerminal, Terminal } from 'lucide';
+  Monitor, MonitorUp, Notebook, OctagonAlert, Package, PanelsTopLeft, Plus, ScanSearch, Shield, ShieldAlert, ShieldCheck, SquareTerminal, Terminal } from 'lucide';
 import { installTooltips } from './tooltips.mjs';
 import { mountChart } from './chart-view.mjs';
 import { installDateRangePicker, positionPopover } from './date-range-picker.mjs';
@@ -13,7 +13,7 @@ import { orderPrograms } from './program-order.mjs';
 const root = document.getElementById('security-activity');
 const icons = { Archive, AppWindow, Asterisk, AudioLines, Braces, CalendarDays, ChartNoAxesColumn, Check, ChevronRight, CircleAlert, CircleCheck, CircleHelp, Component,
   FileQuestion, FlaskConical, FolderSync, GitBranch, GitPullRequest, Globe, Hexagon, Inbox, KeyRound, Monitor,
-  MonitorUp, Notebook, Package, PanelsTopLeft, Plus, ScanSearch, Shield, ShieldCheck, SquareTerminal, Terminal };
+  MonitorUp, Notebook, OctagonAlert, Package, PanelsTopLeft, Plus, ScanSearch, Shield, ShieldAlert, ShieldCheck, SquareTerminal, Terminal };
 const drawIcons = () => createIcons({ icons, attrs: { width: 16, height: 16 } });
 const app = new App({ name: 'Activity Observer', version: '0.1.0' },
   { availableDisplayModes: ['inline', 'fullscreen'] }, { autoResize: true });
@@ -263,7 +263,7 @@ function displayCards(data) {
     mark.append(icon(program.icon));
     marks.set(program.id, mark);
     heading.append(mark, el('h3', '', program.name));
-    if (program.status === 'normal' || program.status === 'attention') {
+    if (['normal', 'attention', 'threat'].includes(program.status)) {
       const state = el('span', 'oi-card-state', t('status.' + program.status));
       state.dataset.status = program.status;
       heading.append(state);
@@ -283,6 +283,8 @@ function displayCards(data) {
     return item;
   }));
   cards.hidden = false;
+  const verdict = data.verdict ?? data.report?.verdict;
+  window.showActivityObserverVerdict(root.querySelector('#oi-card-verdict'), verdict, verdict && t('verdict.' + verdict));
   changeState('card', 'ready');
   drawIcons();
   positionCards();
