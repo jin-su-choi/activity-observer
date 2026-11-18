@@ -26,7 +26,7 @@ A quiet log is not proof of a clean Mac. This page lists what Activity Observer 
 - File events can be dropped under heavy file activity. The collector then rechecks the files it knows, which confirms their current state and does not recover the missed events. A file created and deleted inside a gap is never seen.
 - Screen, camera, microphone and permission events are parsed from the system log. A macOS update can change the format, and those sensors then report themselves as degraded or see nothing.
 - Network attribution uses a private macOS framework.
-- Storage is limited to 1 GB. Old records are pruned first, and the retention period depends on how active the Mac is. On the author's Mac the detailed records covered about three days before 0.4.0 doubled the pruning threshold. How long they last under 0.4.0 has not been measured.
+- Storage is limited to 1 GB. Old records are pruned first, and the retention period depends on how active the Mac is. Cleanup starts when used SQLite pages exceed 75% of the writer's page budget. With the default 1 GB directory budget this is at most about 250 MB of live pages. Other managed files can lower that threshold.
 
 ## Trust boundaries
 

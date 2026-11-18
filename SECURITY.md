@@ -25,7 +25,7 @@ The design, its trust boundaries and how to verify an installation are described
 There are no binary releases and no automatic updates. A release is a signed git tag. Verify it before building:
 
 ```sh
-git -c gpg.ssh.allowedSignersFile=allowed_signers tag -v v0.4.0
+git -c gpg.ssh.allowedSignersFile=allowed_signers tag -v v0.4.1
 ```
 
 The tag is signed with the maintainer's SSH key, which is listed in `allowed_signers`. The same key is published at <https://github.com/jin-su-choi.keys>, so you can compare the two instead of trusting the file in your checkout.

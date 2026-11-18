@@ -60,7 +60,7 @@ To watch for yourself that nothing leaves the Mac, look up the Activity Observer
 
 ```sh
 # signature of the release you are about to build
-git -c gpg.ssh.allowedSignersFile=allowed_signers tag -v v0.4.0
+git -c gpg.ssh.allowedSignersFile=allowed_signers tag -v v0.4.1
 # fails if a package does not match its pinned hash
 cd UI && npm ci --ignore-scripts
 ```

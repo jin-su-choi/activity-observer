@@ -90,7 +90,7 @@ export function createObserverServer(bundle, finderOptions, { state = createObse
   const text = serverI18n(), s = text.s;
   const described = name => ({ title: s('tool.' + name + '.title'), description: s('tool.' + name + '.description') });
   const forModel = (value, localize) => text.locale === canonicalLocale ? value : localize(value, text);
-  const server = new McpServer({ name: 'activity-observer', version: '0.4.0', ...(icons && { icons }) }, { instructions: s('server.instructions') });
+  const server = new McpServer({ name: 'activity-observer', version: '0.4.1', ...(icons && { icons }) }, { instructions: s('server.instructions') });
   // Log-derived values for the model are cleaned and kept under `observed`.
   const observedResult = (rest, data) => {
     const { value, flagged } = guardObserved(data);

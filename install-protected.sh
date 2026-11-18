@@ -15,7 +15,7 @@ while (( $# )); do
 done
 ao_source="${0:A:h}/activity-observer"
 /usr/bin/python3 - "$ao_uid" "$ao_expected" "$ao_source" <<'PY'
-import os,sys,stat,pwd,hashlib,subprocess,pathlib,plistlib,time,json,tempfile
+import os,sys,stat,pwd,hashlib,subprocess,pathlib,plistlib,time,json,tempfile,sqlite3,shutil
 uid_text,expected,source_text=sys.argv[1:]
 if not uid_text.isdecimal() or int(uid_text)==0: raise SystemExit('A non-root user ID is required')
 uid=int(uid_text);user=pwd.getpwuid(uid);source=pathlib.Path(source_text)
@@ -110,6 +110,53 @@ if had_fifo:
     info=capture_fifo.lstat()
     if not stat.S_ISFIFO(info.st_mode) or info.st_uid!=0 or info.st_mode&0o077:raise SystemExit('Unsafe capture pipe')
 
+def drain_full_writer():
+    if not loaded['system',guard_plist] or prior_key is None:
+        return
+    command=[sandbox,'-D','AO_NODE='+str(binary),'-f',str(policies['mcp']),str(binary),'status',
+             '--directory',str(data),'--protected-file','--expected-key',hashlib.sha256(prior_key).hexdigest()]
+    def signed_status():
+        result=subprocess.run(command,check=True,capture_output=True,text=True,timeout=15)
+        status=json.loads(result.stdout)
+        if status.get('status_signature_valid') is not True or not status.get('collector_running'):
+            raise RuntimeError('Cannot confirm the running writer status')
+        return status
+    before=signed_status()
+    storage=before.get('sensors',{}).get('storage',{})
+    pending=before['pending_patterns']
+    if not pending or storage.get('status')!='degraded':
+        return
+    if storage.get('sqlite_code')!=13:
+        raise RuntimeError('Existing writer has uncommitted observations and a storage error. Writer left running.')
+    # max_page_count belongs to each SQLite connection. Give the live writer
+    # reusable pages without touching signed rows, indexes or its chain head.
+    db=data/'events.sqlite'
+    info=db.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or info.st_mode&0o022:
+        raise RuntimeError('Unsafe writer database')
+    reserve=64*1024*1024
+    if before['data_bytes']+2*reserve>before['max_data_bytes'] or shutil.disk_usage(data).free<3*reserve:
+        raise RuntimeError('Not enough space for bounded live recovery. Writer left running.')
+    with sqlite3.connect(db.as_uri()+'?mode=rw',uri=True,timeout=15) as con:
+        if con.execute('PRAGMA auto_vacuum').fetchone()[0]!=2:
+            raise RuntimeError('Live recovery requires incremental vacuum. Writer left running.')
+        con.execute('BEGIN IMMEDIATE')
+        free=con.execute('PRAGMA freelist_count').fetchone()[0]*con.execute('PRAGMA page_size').fetchone()[0]
+        if free<reserve:
+            con.execute('CREATE TABLE ao_upgrade_reserve(padding BLOB)')
+            con.execute('INSERT INTO ao_upgrade_reserve VALUES(zeroblob(?))',(reserve-free,))
+            con.execute('DROP TABLE ao_upgrade_reserve')
+    deadline=time.monotonic()+120
+    while time.monotonic()<deadline:
+        now=signed_status()
+        if now['pid']!=before['pid'] or now['started']!=before['started']:
+            raise RuntimeError('Writer changed during live recovery')
+        if now['written_rows']>=before['written_rows']+pending and now['sensors'].get('storage',{}).get('status')=='active':
+            print(json.dumps({'previous_pending_committed':pending,'dropped_before':before['dropped_events'],'dropped_after':now['dropped_events']}),flush=True)
+            return
+        time.sleep(2)
+    raise RuntimeError('Could not confirm pending writes. Original writer left running.')
+
 def stop_jobs():
     for domain,p in reversed(jobs):
         label=f'{domain}/{p.stem}'
@@ -150,6 +197,7 @@ core_started=False
 try:
     ui_prepared=True
     ui_step('prepare')
+    drain_full_writer()
     core_started=True
     switch_started_at=time.time()
     stop_jobs()
@@ -206,7 +254,7 @@ try:
             sensors={k:v['status'] for k,v in status.get('sensors',{}).items()}
             required=['guard_network_isolation']
             if gui_active:required+=['guard_capture_feed','guard_sensor_liveness','sensor_network_isolation','install_update','input_taps','hid','capture','audio']
-            if status.get('status_signature_valid') and status.get('started',0)>=switch_started_at and all(sensors.get(name)=='active' for name in required):break
+            if status.get('status_signature_valid') and status.get('started',0)>=switch_started_at and status.get('written_rows',0)>0 and sensors.get('storage')!='degraded' and all(sensors.get(name)=='active' for name in required):break
         else:
             try:last_probe['error']=json.loads(probe.stdout).get('error') or last_probe['error']
             except ValueError:pass

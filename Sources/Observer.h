@@ -3,7 +3,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 static const uint64_t AODefaultMaxDataBytes = 1000000000ULL;
-#define AO_VERSION "0.4.0"
+#define AO_VERSION "0.4.1"
 static const NSUInteger AOReadRequestMaxBytes = 512 * 1024;
 static const NSUInteger AOSensorFrameMaxBytes = 64 * 1024;
 extern dispatch_queue_t ObserverQueue;

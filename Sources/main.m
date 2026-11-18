@@ -56,6 +56,19 @@ static int selfTest(void) {
         if(!store.pruned||[store query:@"SELECT id FROM events WHERE kind IN ('old','ancient')" arguments:@[]].count) @throw @"capacity did not prune oldest events";
         uint64_t eventPruned=store.pruned,eventDropped=store.dropped;
         [store close];
+        // A co-resident archive can lower the writer's cap below one quarter
+        // of the directory budget. A full writer must still commit new events.
+        NSString *pressurePath=[path stringByAppendingPathComponent:@"pressure"];
+        [NSFileManager.defaultManager createDirectoryAtPath:pressurePath withIntermediateDirectories:YES attributes:nil error:nil];
+        [[NSMutableData dataWithLength:5*1024*1024] writeToFile:[pressurePath stringByAppendingPathComponent:@"archive"] atomically:NO];
+        store=[[AOStore alloc] initWithDirectory:pressurePath maxBytes:8*1024*1024];
+        for(int batch=0;batch<30;batch++){
+            for(int i=0;i<100;i++) [store record:@"pressure" actor:actor source:@"test" detail:@{@"i":@(i),@"pad":[@"x" stringByPaddingToLength:900 withString:@"x" startingAtIndex:0]} priority:1];
+            [store flush];
+            if(store.written<(batch+1)*100) @throw [NSString stringWithFormat:@"writer stalled at batch %d: %llu committed",batch,store.written];
+        }
+        if(!store.pruned || store.dropped) @throw @"capacity recovery lost observations";
+        [store close];
         NSString *statisticsPath=[path stringByAppendingPathComponent:@"statistics"];
         store=[[AOStore alloc] initWithDirectory:statisticsPath maxBytes:3*1024*1024];
         for(int batch=0;batch<100&&!store.prunedStatistics;batch++) {

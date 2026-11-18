@@ -136,6 +136,7 @@ uint64_t AODirectoryBytes(NSString *path) {
     int64_t _headID;
     int64_t _boundaryID;
     NSTimeInterval _sealedStarted;
+    uint64_t _retentionPageLimit;
     int _databaseResult;
     NSDictionary *_lastStorageError;
 }
@@ -166,7 +167,14 @@ uint64_t AODirectoryBytes(NSString *path) {
     uint64_t reserve=MIN(8*1024*1024,_maxBytes/16);
     if(occupied+reserve>=_maxBytes)@throw [NSException exceptionWithName:@"StorageBudget" reason:@"Existing managed files exhaust the storage budget" userInfo:nil];
     uint64_t databaseBudget=MIN(_maxBytes/3,(_maxBytes-occupied-reserve)/2);
-    [self execute:[NSString stringWithFormat:@"PRAGMA max_page_count=%llu", databaseBudget / 4096] arguments:@[]];
+    uint64_t pageSize=[[self query:@"PRAGMA page_size" arguments:@[]].firstObject[@"page_size"] unsignedLongLongValue];
+    if(!pageSize || databaseBudget<pageSize) @throw [NSException exceptionWithName:@"StorageBudget" reason:@"No space for database pages" userInfo:nil];
+    uint64_t requestedPages=databaseBudget/pageSize;
+    NSString *limitSQL=[NSString stringWithFormat:@"PRAGMA max_page_count=%llu",requestedPages];
+    uint64_t effectivePages=[[self query:limitSQL arguments:@[]].firstObject[@"max_page_count"] unsignedLongLongValue];
+    if(!effectivePages) @throw [NSException exceptionWithName:@"StorageBudget" reason:@"Could not set database page limit" userInfo:nil];
+    // SQLite cannot lower the cap below the file's current size on upgrade.
+    _retentionPageLimit=MIN(requestedPages,effectivePages)*3/4;
     if(![self execute:@"CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY AUTOINCREMENT,first REAL NOT NULL,last REAL NOT NULL,day TEXT NOT NULL,kind TEXT NOT NULL,app TEXT NOT NULL,pid INTEGER,path TEXT,source TEXT,detail TEXT,priority INTEGER,count INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS events_day ON events(day,id); CREATE INDEX IF NOT EXISTS events_last ON events(last); CREATE TABLE IF NOT EXISTS daily(day TEXT,app TEXT,kind TEXT,count INTEGER,rx INTEGER,tx INTEGER,PRIMARY KEY(day,app,kind)); CREATE TABLE IF NOT EXISTS state(key TEXT PRIMARY KEY,value TEXT); CREATE TABLE IF NOT EXISTS inventory(path TEXT PRIMARY KEY,fingerprint TEXT NOT NULL,detail TEXT NOT NULL,updated REAL NOT NULL);" arguments:@[]])
         @throw [NSException exceptionWithName:@"Database" reason:@"Could not initialize the log schema" userInfo:nil];
     NSDictionary *saved=[self query:@"SELECT value FROM state WHERE key='retention_counters'" arguments:@[]].firstObject;
@@ -287,11 +295,8 @@ uint64_t AODirectoryBytes(NSString *path) {
     NSNumber *pages=[self query:@"PRAGMA page_count" arguments:@[]].firstObject[@"page_count"];
     NSNumber *free=[self query:@"PRAGMA freelist_count" arguments:@[]].firstObject[@"freelist_count"];
     if(!pages || !free || pages.unsignedLongLongValue<free.unsignedLongLongValue) return 0;
-    // The limit covers the whole directory. The database may use what remains
-    // after headroom for the write-ahead log, vacuuming and archived files:
-    // three quarters of a small budget, and at most 500 MB of a large one.
-    uint64_t headroom=MIN(_maxBytes/4*3,(uint64_t)500000000);
-    return (pages.unsignedLongLongValue-free.unsignedLongLongValue)*4096>_maxBytes-headroom?pages.unsignedIntegerValue:0;
+    NSUInteger used=pages.unsignedIntegerValue-free.unsignedIntegerValue;
+    return used>_retentionPageLimit?used:0;
 }
 - (BOOL)prune:(NSUInteger)count {
     __block uint64_t removed=0, unreviewed=0, statistics=0;
