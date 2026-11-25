@@ -127,7 +127,7 @@ Digest `access`. Incidents `changed_program_access`, `signer_changed_access`.
 
 Digest `collection`. Incidents `collection_gap`, `collection_loss`, `sensor_unhealthy`, `protected_installation`, `log_integrity`.
 
-1. A file-watch gap: what happened in that second (`read_selected_activity` around it), how many events were lost (`lost`), and whether a rescan completed afterwards.
+1. A file-watch gap: what happened in that second (`read_selected_activity` around it), how many events were lost (`lost`), and whether a rescan completed afterwards. Check collection.historyReplays and the filesystem_history_paths records for the same run. These paths can overlap live observations. A finished history read is not recovery of all operations; a timeout, limit, unavailable history or another journal drop leaves the reconstruction partial.
 2. A stopped sensor or collector: whether Activity Observer was installed or updated, or the Mac restarted, at that time.
 3. A failed pin, signature or chain: nothing explains this away.
 

@@ -30,7 +30,7 @@ export function buildReviewDigest(start) {
   const clock = zoneClock();
   const stamp = seconds => new Date(seconds * 1000).toLocaleString('sv-SE', { timeZone: clock.timeZone });
   const programs = new Map(), days = {};
-  const gaps = [], rescans = [], sensitiveFiles = [], autostart = [];
+  const gaps = [], rescans = [], historyReplays = [], sensitiveFiles = [], autostart = [];
   let rejections = 0, sensorRestarts = 0, reconciled = 0, gapCount = 0, lostInGaps = 0;
   // Rows arrive in ID order, so the first one marks when the interval began.
   let began = null;
@@ -45,6 +45,9 @@ export function buildReviewDigest(start) {
       const lost = lostEvents(row, detail);
       gapCount++; lostInGaps += lost;
       push(gaps, { at: stamp(row.last), source: row.source, reason: String(detail.reason ?? row.kind).slice(0, 160), lost }, 20);
+    } else if (row.kind === 'filesystem_history_replay') {
+      push(historyReplays, { at: stamp(row.last), status: detail.status, pathHints: Number(detail.path_hints) || 0,
+        afterEventId: detail.after_event_id, throughEventId: detail.through_event_id }, 20);
     } else if (row.kind === 'filesystem_inventory_reconciled') {
       if (detail.status === 'completed') reconciled++;
       push(rescans, { at: stamp(row.last), status: detail.status === 'completed' ? 'completed' : 'partial', pathsRechecked: Number(detail.known_paths_rechecked) || 0 }, 20);
@@ -172,7 +175,7 @@ export function buildReviewDigest(start) {
       sensorsNotActive: sensors, droppedEvents: status.dropped_events, sensorDropped: status.sensors?.guard_sensor_metrics?.dropped,
       prunedRows: status.pruned_rows, prunedStatisticsRows: status.pruned_statistics_rows, boundaryId: status.boundary_id,
       dataBytes: status.data_bytes, maxDataBytes: status.max_data_bytes,
-      gaps, gapCount, lostInGaps, rescans, reconciledRescans: reconciled, rejectedConnections: rejections, sensorConnections: sensorRestarts },
+      gaps, gapCount, lostInGaps, historyReplays, rescans, reconciledRescans: reconciled, rejectedConnections: rejections, sensorConnections: sensorRestarts },
     detector: history ? { lastScan: history.lastScan ? stamp(history.lastScan) : null, deliveryIssue: history.deliveryIssue ?? null, incidents } : null,
     observed, ...(flagged.length && { flagged })
   };

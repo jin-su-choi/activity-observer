@@ -217,7 +217,7 @@ Activity Observer differs in two ways. The whole loop, daily review, alert, dash
 
 ## Status and roadmap
 
-Version 0.4.1 fixes a storage limit that could stall the writer. The collector and signed-log self-tests pass. The previous version ran daily on the author's Mac. The fresh-install path, Claude Code and other macOS versions have had far less testing than that one machine. [docs/KNOWN_LIMITS.md](docs/KNOWN_LIMITS.md) says exactly what was verified.
+Version 0.4.2 checks the macOS file event journal when the sensor reports a delivery gap. It can identify paths that changed and have since disappeared. The daily review reports how the history query ended and how many paths it returned. The fresh-install path, Claude Code and other macOS versions have had far less testing than that one machine. [docs/KNOWN_LIMITS.md](docs/KNOWN_LIMITS.md) says exactly what was verified.
 
 Planned: Windows support, recording process starts, connections made through Apple's networking stack, destination names next to addresses, and more detection rules shaped by replays of real logs.
 

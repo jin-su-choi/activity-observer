@@ -23,7 +23,7 @@ A quiet log is not proof of a clean Mac. This page lists what Activity Observer 
 
 ## Collection can lapse
 
-- File events can be dropped under heavy file activity. The collector then rechecks the files it knows, which confirms their current state and does not recover the missed events. A file created and deleted inside a gap is never seen.
+- File events can be dropped under heavy file activity. During a live session the collector consults recent macOS journal history after a delivery gap, in addition to rescanning current files. The journal can identify paths that have since disappeared. Results can overlap live records and cannot establish every operation, its order or the contents. History queries have a 12-second deadline and keep at most 16,384 distinct paths within a 4 MiB accounting budget per query. An unavailable, interrupted or limited query leaves the gap open; even a finished query is not proof of complete coverage.
 - Screen, camera, microphone and permission events are parsed from the system log. A macOS update can change the format, and those sensors then report themselves as degraded or see nothing.
 - Network attribution uses a private macOS framework.
 - Storage is limited to 1 GB. Old records are pruned first, and the retention period depends on how active the Mac is. Cleanup starts when used SQLite pages exceed 75% of the writer's page budget. With the default 1 GB directory budget this is at most about 250 MB of live pages. Other managed files can lower that threshold.

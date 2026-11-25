@@ -1,4 +1,5 @@
 #import "Observer.h"
+#import "FileHistory.h"
 #import <AppKit/AppKit.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <CoreAudio/CoreAudio.h>
@@ -117,7 +118,7 @@ static NSString *appRoot(NSString *path) {
     return boundary.location==NSNotFound?path:[path substringToIndex:boundary.location+4];
 }
 
-// Both queues belong to fileInputQueue. File I/O and signing never run there.
+// The classifier owns fileInbox. fileReady is locked only while transferring entries.
 // Account for string storage and per-entry overhead, with a separate count cap.
 // Repeated bundle changes share one entry and a bounded set of example paths.
 @interface AOFileQueue : NSObject
@@ -215,6 +216,19 @@ static NSString *versionFamily(NSString *path) {
     return [NSString pathWithComponents:parts];
 }
 
+// Only the delivery callback appends. The classifier detaches the whole window
+// under a short lock; neither grouping nor filesystem I/O runs under that lock.
+@interface AOFileWindow : NSObject
+@property NSMutableArray *batches;
+@property NSUInteger bytes, paths, dropped, signals;
+@property unsigned signalFlags;
+@property NSTimeInterval gapTime, longestCallback, firstDelivery;
+@property FSEventStreamEventId replayAfter;
+@end
+@implementation AOFileWindow
+- (instancetype)init { if((self=[super init])) _batches=[NSMutableArray new]; return self; }
+@end
+
 @interface AOCollector ()
 @property AOStore *store;
 @property NSArray<NSString *> *roots;
@@ -253,9 +267,16 @@ static NSString *versionFamily(NSString *path) {
 @property AOFileQueue *fileInbox;
 @property AOFileQueue *fileReady;
 @property NSMutableSet *knownFilePaths;
-@property NSUInteger fileSignals;
-@property unsigned fileSignalFlags;
-@property NSTimeInterval fileSignalTime;
+@property NSObject *windowLock;
+@property AOFileWindow *window;
+// Owned by the serial live callback. Keep a short overlap: a drop marker
+// may arrive in the middle of a burst, after some newer paths arrived.
+@property FSEventStreamEventId liveLastID, replayFloor;
+@property NSTimeInterval lastFloorRotation;
+@property dispatch_queue_t historyQueue;
+@property NSObject *historyLock;
+@property BOOL historyScheduled;
+@property FSEventStreamEventId pendingHistoryAfter;
 @property NSTimeInterval lastFileDelayReport;
 @property NSTimeInterval nextFileDrain;
 @property NSTimeInterval nextFileProcess;
@@ -278,26 +299,52 @@ static NSString *versionFamily(NSString *path) {
 @end
 
 static void fileEvents(ConstFSEventStreamRef stream,void *context,size_t count,void *paths,const FSEventStreamEventFlags flags[],const FSEventStreamEventId ids[]) {
-    (void)stream;(void)ids;
+    (void)stream;
     AOCollector *self=(__bridge AOCollector *)context;if(self.stopping)return;
-    NSArray *array=(__bridge NSArray *)paths;NSTimeInterval now=NSDate.date.timeIntervalSince1970;
-    // This queue only coalesces strings and flags. No filesystem, signing,
-    // inventory lookup, or writer calls may block FSEvents delivery here.
-    for(size_t i=0;i<count;i++) {@autoreleasepool{
-        NSString *path=array[i];BOOL relevant=NO;
-        for(NSString *root in self.eventRoots)if([path isEqual:root]||[path hasPrefix:[root stringByAppendingString:@"/"]]){relevant=YES;break;}
-        if(flags[i]&(kFSEventStreamEventFlagUserDropped|kFSEventStreamEventFlagKernelDropped|kFSEventStreamEventFlagMustScanSubDirs)) {
-            self.fileSignals++;self.fileSignalFlags|=flags[i];self.fileSignalTime=now;
+    NSTimeInterval start=NSProcessInfo.processInfo.systemUptime;
+    NSTimeInterval now=NSDate.date.timeIntervalSince1970;
+    NSArray *array=(__bridge NSArray *)paths;
+    // Reserve from the current bound without holding the lock across a copy.
+    // While this serial producer is copying, the consumer can only free space.
+    NSUInteger room,slots;
+    @synchronized(self.windowLock){
+        room=8*1024*1024-self.window.bytes;
+        slots=32768-self.window.paths;
+    }
+    NSUInteger keep=0,bytes=512,signals=0;
+    FSEventStreamEventId newest=0;
+    unsigned signalFlags=0;
+    for(size_t i=0;i<count;i++){
+        newest=MAX(newest,ids[i]);
+        if(flags[i]&(kFSEventStreamEventFlagUserDropped|kFSEventStreamEventFlagKernelDropped|kFSEventStreamEventFlagMustScanSubDirs)){
+            signals++; signalFlags|=flags[i];
         }
-        if(!relevant)continue;
-        if([path isEqual:self.store.directory]||[path hasPrefix:[self.store.directory stringByAppendingString:@"/"]])continue;
-        NSString *group=appRoot(path);
-        // Directory metadata alone cannot identify a new executable. Retain
-        // creation/removal/rename signals, known paths and all app-bundle changes.
-        unsigned structural=kFSEventStreamEventFlagItemCreated|kFSEventStreamEventFlagItemRemoved|kFSEventStreamEventFlagItemRenamed|kFSEventStreamEventFlagMustScanSubDirs|kFSEventStreamEventFlagRootChanged;
-        if((flags[i]&kFSEventStreamEventFlagItemIsDir)&&!(flags[i]&structural)&&![group.pathExtension isEqual:@"app"]&&![self.knownFilePaths containsObject:group])continue;
-        if(![self.fileInbox add:group changed:@[path] flags:flags[i] source:@"fsevents" at:now])self.fileSignalTime=now;
-    }}
+        if(i!=keep || keep>=slots) continue;
+        NSUInteger cost=96+2*[array[i] length];
+        if(bytes+cost<=room){bytes+=cost;keep++;}
+    }
+    NSDictionary *batch=nil;
+    if(keep){
+        batch=@{@"paths":[array subarrayWithRange:NSMakeRange(0,keep)],
+                @"flags":[NSData dataWithBytes:flags length:keep*sizeof(*flags)],
+                @"roots":self.eventRoots,@"time":@(now)};
+    }
+    @synchronized(self.windowLock){
+        AOFileWindow *window=self.window;
+        if(!window.firstDelivery)window.firstDelivery=NSProcessInfo.processInfo.systemUptime;
+        if(batch){[window.batches addObject:batch];window.bytes+=bytes;window.paths+=keep;}
+        window.dropped+=count-keep; window.signals+=signals; window.signalFlags|=signalFlags;
+        if(signals||keep<count){
+            if(!window.replayAfter)window.replayAfter=self.replayFloor;
+            window.gapTime=now;
+        }
+        window.longestCallback=MAX(window.longestCallback,NSProcessInfo.processInfo.systemUptime-start);
+    }
+    if(!signals && keep==count && start-self.lastFloorRotation>=5){
+        self.replayFloor=self.liveLastID;
+        self.lastFloorRotation=start;
+    }
+    self.liveLastID=MAX(self.liveLastID,newest);
     dispatch_source_t signal=self.fileDrainSource;if(signal)dispatch_source_merge_data(signal,1);
 }
 
@@ -312,6 +359,9 @@ static void fileEvents(ConstFSEventStreamRef stream,void *context,size_t count,v
         _networkTraffic=[NSMutableDictionary new];
         _connectionWindows=[NSMutableDictionary new];_sensitiveSeen=[NSMutableDictionary new];
         _permissionRequests=[NSMutableDictionary new];_permissionSeen=[NSMutableDictionary new];
+        _historyLock=[NSObject new];
+        _historyQueue=dispatch_queue_create("local.activity-observer.files.history",dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL,QOS_CLASS_UTILITY,0));
+        _windowLock=[NSObject new];_window=[AOFileWindow new];
         _fileInbox=[AOFileQueue new];_fileReady=[AOFileQueue new];
         _knownFilePaths=[NSMutableSet setWithArray:[[store query:@"SELECT path,detail FROM inventory" arguments:@[]] valueForKey:@"path"]];
         dispatch_queue_attr_t fileAttr=dispatch_queue_attr_make_with_autorelease_frequency(dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL,QOS_CLASS_UTILITY,0),DISPATCH_AUTORELEASE_FREQUENCY_WORK_ITEM);
@@ -410,7 +460,7 @@ static void fileEvents(ConstFSEventStreamRef stream,void *context,size_t count,v
     dispatch_source_set_event_handler(_fileProcessSource,^{@autoreleasepool{[weak processPaths];}});dispatch_resume(_fileProcessSource);
 }
 - (void)queueProgram:(NSString *)path changed:(NSArray *)changed flags:(unsigned)flags source:(NSString *)source at:(NSTimeInterval)at {
-    dispatch_sync(_fileInputQueue,^{[self.fileReady add:path changed:changed flags:flags source:source at:at];});
+    @synchronized(_fileReady){[_fileReady add:path changed:changed flags:flags source:source at:at];}
     dispatch_source_t signal=self.fileProcessSource;if(signal)dispatch_source_merge_data(signal,1);
 }
 
@@ -427,10 +477,64 @@ static void fileEvents(ConstFSEventStreamRef stream,void *context,size_t count,v
     NSUInteger dropped=[overflow[@"dropped"] unsignedIntegerValue];if(!dropped&&!signals)return;
     [self fileRecord:@"collection_gap" actor:@{@"app":@"activity-observer",@"pid":@(getpid())} source:@"fsevents" detail:@{
         @"reason":dropped?@"file queue exceeded its memory or entry limit":@"filesystem stream requires rescan",
-        @"queue":queue,@"flags":@(flags),@"signals":@(signals),@"queue_dropped":@(dropped),@"ingress_dropped":@([queue isEqual:@"classification"]?dropped:0),
+        @"queue":queue,@"flags":@(flags),@"signals":@(signals),@"queue_dropped":@(dropped),@"ingress_dropped":@([queue isEqual:@"fingerprint"]?0:dropped),
         @"queued_paths":@(queued),@"overflow_paths":overflow[@"paths"],@"observed_at":@(at)} priority:3];
     if(dropped)dispatch_sync(ObserverQueue,^{if(!self.stopping)self.store.dropped+=dropped;});
     dispatch_async(_fileWorkQueue,^{if(!self.stopping)self.inventoryRecoveryPending=YES;});
+}
+// Coalesce adjacent gap markers into a single history query. New markers
+// arriving during a read retain their earliest cursor for one subsequent pass.
+- (void)scheduleFileHistoryAfter:(FSEventStreamEventId)after {
+    @synchronized(_historyLock){
+        if(!_historyScheduled || !_pendingHistoryAfter || (after && after<_pendingHistoryAfter))_pendingHistoryAfter=after;
+        if(_historyScheduled)return;
+        _historyScheduled=YES;
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW,3*NSEC_PER_SEC),_historyQueue,^{[self readPendingFileHistory];});
+}
+- (void)readPendingFileHistory {
+    if(self.stopping)return;
+    FSEventStreamEventId after;
+    @synchronized(_historyLock){after=_pendingHistoryAfter;_pendingHistoryAfter=0;}
+    NSSet *known;
+    @synchronized(_knownFilePaths){known=[_knownFilePaths copy];}
+    AOReadFileHistory(after,FSEventsGetCurrentEventId(),self.eventRoots,known,^(NSString *kind,NSDictionary *detail){
+        if(!self.stopping)[self fileRecord:kind actor:@{@"app":@"activity-observer"} source:@"fsevents_history" detail:detail priority:1];
+    });
+    @synchronized(_historyLock){
+        if(!_pendingHistoryAfter || self.stopping){_historyScheduled=NO;return;}
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW,3*NSEC_PER_SEC),_historyQueue,^{[self readPendingFileHistory];});
+}
+- (BOOL)isKnownFile:(NSString *)path {
+    @synchronized(_knownFilePaths){return [_knownFilePaths containsObject:path];}
+}
+- (void)groupFileBatch:(NSDictionary *)batch {
+    NSArray *paths=batch[@"paths"],*roots=batch[@"roots"];
+    NSData *flagData=batch[@"flags"];
+    const FSEventStreamEventFlags *flags=flagData.bytes;
+    NSTimeInterval now=[batch[@"time"] doubleValue];
+    NSString *storage=_store.directory,*storagePrefix=[storage stringByAppendingString:@"/"];
+    for(NSUInteger i=0;i<paths.count;i++) {@autoreleasepool{
+        NSString *path=paths[i];NSUInteger rootIndex=0;
+        for(NSString *root in roots){
+            if([path isEqual:root]||[path hasPrefix:[root stringByAppendingString:@"/"]])break;
+            rootIndex++;
+        }
+        if(rootIndex==roots.count || [path isEqual:storage] || [path hasPrefix:storagePrefix])continue;
+        NSString *group=appRoot(path);
+        // Once a file disappears Foundation may leave its physical spelling
+        // intact (e.g. /private/tmp), while inventory holds its logical path.
+        NSString *physicalRoot=roots[rootIndex], *logicalRoot=_roots[rootIndex];
+        if((flags[i]&(kFSEventStreamEventFlagItemRemoved|kFSEventStreamEventFlagItemRenamed)) &&
+           ![physicalRoot isEqual:logicalRoot] && [group hasPrefix:physicalRoot]){
+            NSString *alias=[logicalRoot stringByAppendingString:[group substringFromIndex:physicalRoot.length]];
+            if([self isKnownFile:alias])group=alias;
+        }
+        unsigned structural=kFSEventStreamEventFlagItemCreated|kFSEventStreamEventFlagItemRemoved|kFSEventStreamEventFlagItemRenamed|kFSEventStreamEventFlagMustScanSubDirs|kFSEventStreamEventFlagRootChanged;
+        if((flags[i]&kFSEventStreamEventFlagItemIsDir)&&!(flags[i]&structural)&&![group.pathExtension isEqual:@"app"]&&![self isKnownFile:group])continue;
+        [_fileInbox add:group changed:@[path] flags:flags[i] source:@"fsevents" at:now];
+    }}
 }
 - (void)drainFileEvents {
     if(self.stopping)return;
@@ -438,26 +542,38 @@ static void fileEvents(ConstFSEventStreamRef stream,void *context,size_t count,v
     if(clock<_nextFileDrain){
         if(!_fileDrainScheduled){_fileDrainScheduled=YES;dispatch_after(dispatch_time(DISPATCH_TIME_NOW,(int64_t)((_nextFileDrain-clock)*NSEC_PER_SEC)),_fileClassifyQueue,^{self.fileDrainScheduled=NO;@autoreleasepool{[self drainFileEvents];}});}return;
     }
-    __block NSArray *batch;__block NSSet *known;__block NSDictionary *overflow;
-    __block NSUInteger signals,queued;__block unsigned flags;__block NSTimeInterval signalTime;
-    dispatch_sync(_fileInputQueue,^{
-        queued=self.fileInbox.entries.count;batch=[self.fileInbox take:64];known=[self.knownFilePaths copy];overflow=[self.fileInbox takeOverflow];
-        signals=self.fileSignals;flags=self.fileSignalFlags;signalTime=self.fileSignalTime;self.fileSignals=0;self.fileSignalFlags=0;
-    });
-    [self reportFileOverflow:overflow queue:@"classification" queued:queued flags:flags signals:signals observedAt:signalTime];
+    AOFileWindow *window;
+    @synchronized(_windowLock){window=_window;_window=[AOFileWindow new];}
+    NSTimeInterval handoff=window.firstDelivery?NSProcessInfo.processInfo.systemUptime-window.firstDelivery:0;
+    [self reportFileOverflow:@{@"dropped":@(window.dropped),@"paths":@[]} queue:@"delivery"
+                      queued:window.paths flags:window.signalFlags signals:window.signals observedAt:window.gapTime];
+    if(window.signals || window.dropped)[self scheduleFileHistoryAfter:window.replayAfter];
+    for(NSDictionary *packet in window.batches)[self groupFileBatch:packet];
+    NSUInteger queued=_fileInbox.entries.count;
+    NSArray *batch=[_fileInbox take:64];
+    [self reportFileOverflow:[_fileInbox takeOverflow] queue:@"classification" queued:queued flags:0 signals:0 observedAt:NSDate.date.timeIntervalSince1970];
+    NSTimeInterval inspection=0;
     NSTimeInterval started=NSDate.date.timeIntervalSince1970,oldest=started;
     for(NSDictionary *entry in batch){@autoreleasepool{
         if(self.stopping)return;NSString *container=entry[@"path"];oldest=MIN(oldest,[entry[@"received"] doubleValue]);
+        NSTimeInterval checkStart=NSProcessInfo.processInfo.systemUptime;
         NSString *root=container.stringByResolvingSymlinksInPath;BOOL bundle=[container.pathExtension isEqual:@"app"];
-        BOOL relevant=bundle||[known containsObject:root]||[container containsString:@"LaunchAgents/"]||[container containsString:@"LaunchDaemons/"]||[container containsString:@"PrivilegedHelperTools/"];
+        BOOL relevant=bundle||[self isKnownFile:root]||[container containsString:@"LaunchAgents/"]||[container containsString:@"LaunchDaemons/"]||[container containsString:@"PrivilegedHelperTools/"];
         // Unknown executable files remain observable even in cache directories.
         if(!relevant)relevant=programFile(root);
+        inspection+=NSProcessInfo.processInfo.systemUptime-checkStart;
         if(relevant)[self queueProgram:root changed:[entry[@"changed"] array] flags:[entry[@"flags"] unsignedIntValue] source:entry[@"source"] at:[entry[@"received"] doubleValue]];
     }}
     NSTimeInterval elapsed=NSProcessInfo.processInfo.systemUptime-clock;
-    if((started-oldest>5||elapsed>2)&&started-_lastFileDelayReport>60){_lastFileDelayReport=started;[self fileRecord:@"filesystem_work_delayed" actor:@{@"app":@"activity-observer"} source:@"fsevents" detail:@{@"stage":@"classification",@"oldest_wait_seconds":@(started-oldest),@"batch_seconds":@(elapsed),@"queued_paths":@(queued)} priority:2];}
+    if((started-oldest>5||elapsed>2||window.longestCallback>0.1||handoff>5)&&started-_lastFileDelayReport>60){
+        _lastFileDelayReport=started;
+        [self fileRecord:@"filesystem_work_delayed" actor:@{@"app":@"activity-observer"} source:@"fsevents"
+                  detail:@{@"stage":@"classification", @"queued_paths":@(queued), @"oldest_wait_seconds":@(started-oldest),
+                           @"batch_seconds":@(elapsed), @"max_callback_seconds":@(window.longestCallback),
+                           @"handoff_wait_seconds":@(handoff), @"path_check_seconds":@(inspection)} priority:2];
+    }
     _nextFileDrain=NSProcessInfo.processInfo.systemUptime+MIN(0.05,MAX(0.002,elapsed*3));
-    __block BOOL more;dispatch_sync(_fileInputQueue,^{more=self.fileInbox.entries.count>0||self.fileSignals>0||self.fileInbox.dropped>0;});
+    BOOL more=_fileInbox.entries.count>0;
     dispatch_source_t signal=_fileDrainSource;if(more&&signal)dispatch_source_merge_data(signal,1);
 }
 - (void)accumulateTraffic:(NSDictionary *)actor detail:(NSDictionary *)detail {
@@ -766,7 +882,10 @@ static void fileEvents(ConstFSEventStreamRef stream,void *context,size_t count,v
     if(apps.count==1) { NSRunningApplication *app=apps.firstObject; [actor addEntriesFromDictionary:AOProcess(app.processIdentifier)]; actor[@"app"]=bundle; }
     [_store record:[category stringByAppendingString:active?@"_started":@"_stopped"] actor:actor source:@"os_privacy_attribution" detail:@{@"evidence":@"OS active usage attribution",@"attribution":item} priority:active?2:1];
 }
-- (void)startFiles { [self replaceFileStream:fileWatchRoots(_roots)]; }
+- (void)startFiles {
+    _liveLastID=FSEventsGetCurrentEventId();_replayFloor=_liveLastID;
+    [self replaceFileStream:fileWatchRoots(_roots)];
+}
 - (void)replaceFileStream:(NSArray *)roots {
     if(self.stopping)return;
     FSEventStreamContext context={0,(__bridge void *)self,NULL,NULL,NULL};
@@ -852,8 +971,8 @@ static void fileEvents(ConstFSEventStreamRef stream,void *context,size_t count,v
     if(clock<_nextFileProcess){
         if(!_fileProcessScheduled){_fileProcessScheduled=YES;dispatch_after(dispatch_time(DISPATCH_TIME_NOW,(int64_t)((_nextFileProcess-clock)*NSEC_PER_SEC)),_fileWorkQueue,^{self.fileProcessScheduled=NO;@autoreleasepool{[self processPaths];}});}return;
     }
-    __block NSArray *batch;__block NSDictionary *overflow;__block NSUInteger queued;
-    dispatch_sync(_fileInputQueue,^{queued=self.fileReady.entries.count;batch=[self.fileReady take:8];overflow=[self.fileReady takeOverflow];});
+    NSArray *batch;NSDictionary *overflow;NSUInteger queued;
+    @synchronized(_fileReady){queued=_fileReady.entries.count;batch=[_fileReady take:8];overflow=[_fileReady takeOverflow];}
     [self reportFileOverflow:overflow queue:@"fingerprint" queued:queued flags:0 signals:0 observedAt:NSDate.date.timeIntervalSince1970];
     for(NSDictionary *entry in batch){@autoreleasepool{
         if(self.stopping)return;
@@ -861,7 +980,7 @@ static void fileEvents(ConstFSEventStreamRef stream,void *context,size_t count,v
     }}
     NSTimeInterval elapsed=NSProcessInfo.processInfo.systemUptime-clock;
     _nextFileProcess=NSProcessInfo.processInfo.systemUptime+MIN(0.1,MAX(0.005,elapsed*4));
-    __block BOOL more;dispatch_sync(_fileInputQueue,^{more=self.fileReady.entries.count>0||self.fileReady.dropped>0;});
+    BOOL more;@synchronized(_fileReady){more=_fileReady.entries.count>0||_fileReady.dropped>0;}
     dispatch_source_t signal=_fileProcessSource;if(more&&signal)dispatch_source_merge_data(signal,1);
 }
 - (void)fingerprint:(NSString *)path changed:(NSArray *)changed initial:(BOOL)initial {
@@ -873,7 +992,7 @@ static void fileEvents(ConstFSEventStreamRef stream,void *context,size_t count,v
         struct stat missing;
         if(old&&lstat(path.fileSystemRepresentation,&missing)!=0&&(errno==ENOENT||errno==ENOTDIR)) {
             [self fileRecord:@"program_removed" actor:AOApp(path) source:source detail:@{@"path":path} priority:2];
-            if([self fileExecute:@"DELETE FROM inventory WHERE path=?" arguments:@[path]])dispatch_async(_fileInputQueue,^{[self.knownFilePaths removeObject:path];});
+            if([self fileExecute:@"DELETE FROM inventory WHERE path=?" arguments:@[path]])@synchronized(_knownFilePaths){[_knownFilePaths removeObject:path];}
         }
         return;
     }
@@ -932,7 +1051,7 @@ static void fileEvents(ConstFSEventStreamRef stream,void *context,size_t count,v
         [self fileRecord:kind actor:details source:source detail:event priority:2];
     }
     BOOL saved=[self fileExecute:@"INSERT INTO inventory(path,fingerprint,detail,updated) VALUES(?,?,?,?) ON CONFLICT(path) DO UPDATE SET fingerprint=excluded.fingerprint,detail=excluded.detail,updated=excluded.updated" arguments:@[path,fingerprint,encoded,@(NSDate.date.timeIntervalSince1970)]];
-    if(saved)dispatch_async(_fileInputQueue,^{[self.knownFilePaths addObject:path];});
+    if(saved)@synchronized(_knownFilePaths){[_knownFilePaths addObject:path];}
 }
 - (void)stop {
     self.stopping=YES;

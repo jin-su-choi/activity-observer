@@ -9,6 +9,7 @@
 | Screen, camera, microphone | Which program started and stopped using them, from the system's own privacy indicators. |
 | Privacy permission decisions | Program, permission (for example Accessibility, Screen Recording, Full Disk Access), allowed or denied. One record per combination every six hours. |
 | Programs | Path, bundle identifier, version, code-signing team and identifier, a SHA-256 for small executables, and whether a program was installed, updated, changed, removed or first seen. |
+| File history after a delivery gap | Paths reported by the macOS journal within watched roots, including paths that have since disappeared. Under the broad Application Support and .local roots, only app bundle paths and known inventory paths are retained. No file contents. |
 | Autostart items | Changes under LaunchAgents, LaunchDaemons and PrivilegedHelperTools. |
 | Sensitive files | For SSH access files, shell startup files, git, npm and netrc configuration, and agent settings: path, size, permissions, owner and a SHA-256. For agent state files only the MCP server and hook definitions are hashed. |
 | App lifecycle | Launch and exit of applications. |

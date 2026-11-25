@@ -326,7 +326,7 @@ const labels = {
   program_version_observed: '다른 버전 관측', program_files_changed: '프로그램 파일 변경', program_removed: '프로그램 제거',
   application_launched: '앱 실행', application_terminated: '앱 종료', collector_started: '수집 시작',
   guard_started: '보호 서비스 시작', guard_stopped: '보호 서비스 종료', sensor_connected: '센서 연결', sensor_connection_closed: '센서 연결 종료',
-  guard_connection_rejected: '보호 서비스 접속 거절', collection_gap: '수집 공백', filesystem_inventory_reconciled: '파일 상태 재검색',
+  guard_connection_rejected: '보호 서비스 접속 거절', collection_gap: '수집 공백', filesystem_history_paths: '파일 변경 이력 경로', filesystem_history_replay: '파일 변경 이력 조회', filesystem_inventory_reconciled: '파일 상태 재검색',
   sensitive_file_changed: '민감 파일 변경', permission_decision: '권한 확인'
 };
 function category(kind) {
